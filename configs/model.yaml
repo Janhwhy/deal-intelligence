@@ -1,0 +1,4 @@
+# configs/model.yaml: Model architecture hyperparameters.
+
+lstm_hidden_size: 128
+lstm_num_layers: 1

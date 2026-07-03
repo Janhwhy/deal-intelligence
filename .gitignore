@@ -1,0 +1,39 @@
+# .gitignore: Configures files and directories to be excluded from Git version control.
+# This includes compiled Python files, local virtual environments, and data paths (raw/processed).
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Poetry environment
+.venv
+
+# Unit test / coverage reports
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IDEs & System
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Hydra & runtime output directories
+outputs/
+multirun/
+.hydra/
+
+# Project specific data directories
+# To track README.md inside ignored directories, we ignore contents instead of the directory itself
+data/raw/*
+!data/raw/README.md
+
+data/processed/*
+!data/processed/README.md

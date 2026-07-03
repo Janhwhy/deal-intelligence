@@ -1,0 +1,4 @@
+# configs/data.yaml: Base configuration for data sources and storage paths.
+
+raw_enron_path: "data/raw/enron"
+raw_hubspot_path: "data/raw/hubspot"
