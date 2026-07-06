@@ -1,4 +1,15 @@
-# configs/data.yaml: Base configuration for data sources and storage paths.
+# configs/data.yaml: Configuration for data sources, linking, and output storage paths.
 
-raw_enron_path: "data/raw/enron"
-raw_hubspot_path: "data/raw/hubspot"
+enron_raw_dir: "data/raw/enron"
+hubspot_deals_csv: "data/raw/hubspot/deals.csv"
+hubspot_companies_csv: "data/raw/hubspot/companies.csv"
+hubspot_contacts_csv: "data/raw/hubspot/contacts.csv"
+
+# Linking settings
+deal_linker_seed: 42
+subject_similarity_threshold: 0.5
+time_proximity_window_days: 7
+
+# Processed paths
+processed_deals_dir: "data/processed/deals"
+processed_features_path: "data/processed/tabular_features.parquet"

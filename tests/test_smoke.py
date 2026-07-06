@@ -24,8 +24,8 @@ def test_config_load():
     """Asserts that the config loader parses files."""
     cfg = load_config()
     assert cfg is not None
-    assert cfg.data.raw_enron_path == "data/raw/enron"
-    assert cfg.data.raw_hubspot_path == "data/raw/hubspot"
+    assert cfg.data.enron_raw_dir == "data/raw/enron"
+    assert cfg.data.hubspot_deals_csv == "data/raw/hubspot/deals.csv"
     assert cfg.model.lstm_hidden_size == 128
     assert cfg.model.lstm_num_layers == 1
     assert cfg.train.batch_size == 32

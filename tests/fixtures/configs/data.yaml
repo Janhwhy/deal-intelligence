@@ -1,0 +1,13 @@
+enron_raw_dir: "tests/fixtures/raw/enron"
+hubspot_deals_csv: "tests/fixtures/raw/hubspot/deals.csv"
+hubspot_companies_csv: "tests/fixtures/raw/hubspot/companies.csv"
+hubspot_contacts_csv: "tests/fixtures/raw/hubspot/contacts.csv"
+
+# Linking settings
+deal_linker_seed: 42
+subject_similarity_threshold: 0.5
+time_proximity_window_days: 7
+
+# Processed paths
+processed_deals_dir: "tests/fixtures/processed/deals"
+processed_features_path: "tests/fixtures/processed/tabular_features.parquet"

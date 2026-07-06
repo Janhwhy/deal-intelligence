@@ -37,3 +37,9 @@ data/raw/*
 
 data/processed/*
 !data/processed/README.md
+
+# Processed outputs and logs
+data/processed/deals/*.json
+data/processed/*.parquet
+tests/fixtures/processed/
+*.log

@@ -8,8 +8,15 @@ from omegaconf import OmegaConf
 
 @dataclass
 class DataConfig:
-    raw_enron_path: str
-    raw_hubspot_path: str
+    enron_raw_dir: str
+    hubspot_deals_csv: str
+    hubspot_companies_csv: str
+    hubspot_contacts_csv: str
+    deal_linker_seed: int
+    subject_similarity_threshold: float
+    time_proximity_window_days: int
+    processed_deals_dir: str
+    processed_features_path: str
 
 
 @dataclass
