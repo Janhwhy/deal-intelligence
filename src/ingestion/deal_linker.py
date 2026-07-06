@@ -1,13 +1,13 @@
 # src/ingestion/deal_linker.py: Links parsed emails into pseudo-deals and associates them with synthetic CRM metadata.
 
-import os
-import re
-import logging
 import difflib
-from datetime import datetime, timedelta
-from typing import List, Dict, Any, Tuple
-import pandas as pd
+import logging
+import re
+from datetime import timedelta
+from typing import Any, Dict, List
+
 import numpy as np
+import pandas as pd
 
 from src.config import DataConfig
 
@@ -28,7 +28,7 @@ def normalize_subject(subj: str) -> str:
         changed = False
         for prefix in ["re:", "fw:", "fwd:"]:
             if s.startswith(prefix):
-                s = s[len(prefix):].strip()
+                s = s[len(prefix) :].strip()
                 changed = True
         if not changed:
             break

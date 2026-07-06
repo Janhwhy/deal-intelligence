@@ -1,11 +1,11 @@
 # src/ingestion/timeline_builder.py: Builds chronologically ordered deal timelines validated against Pydantic models.
 
-import os
-import json
 import logging
+import os
 from datetime import datetime
-from typing import List, Dict, Any, Optional, Union, Literal
-from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Literal, Optional, Union
+
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 

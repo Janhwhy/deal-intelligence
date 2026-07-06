@@ -1,9 +1,6 @@
 # tests/conftest.py: Shared fixtures for testing the ingestion and features modules.
 
-import os
 import pytest
-from datetime import datetime, timezone
-import pandas as pd
 
 from src.config import AppConfig, DataConfig, ModelConfig, TrainConfig
 
@@ -15,7 +12,7 @@ def mock_data_dir(tmp_path):
     raw_dir = tmp_path / "raw"
     enron_dir = raw_dir / "enron" / "maildir"
     hubspot_dir = raw_dir / "hubspot"
-    
+
     enron_dir.mkdir(parents=True)
     hubspot_dir.mkdir(parents=True)
 

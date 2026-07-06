@@ -2,13 +2,13 @@
 
 import os
 import sys
-import pytest
-import pandas as pd
 from unittest.mock import patch
 
-from src.ingestion.pipeline import run_ingestion_pipeline
-from src.features.tabular_features import build_tabular_features
+import pandas as pd
+
 from src.config import load_config
+from src.features.tabular_features import build_tabular_features
+from src.ingestion.pipeline import run_ingestion_pipeline
 
 
 def test_pipeline_and_feature_extraction_end_to_end(mock_data_dir, mock_app_config):
@@ -31,7 +31,9 @@ def test_pipeline_and_feature_extraction_end_to_end(mock_data_dir, mock_app_conf
         f"processed_features_path: {data_cfg.processed_features_path}\n"
     )
     (config_dir / "data.yaml").write_text(data_yaml_content)
-    (config_dir / "model.yaml").write_text("lstm_hidden_size: 128\nlstm_num_layers: 1\n")
+    (config_dir / "model.yaml").write_text(
+        "lstm_hidden_size: 128\nlstm_num_layers: 1\n"
+    )
     (config_dir / "train.yaml").write_text("batch_size: 32\nlearning_rate: 0.001\n")
 
     # Run the ingestion pipeline by mocking sys.argv to pass the temporary config_dir
@@ -51,7 +53,7 @@ def test_pipeline_and_feature_extraction_end_to_end(mock_data_dir, mock_app_conf
     # Verify that the features DataFrame was created, saved to parquet, and contains the deal
     assert not df.empty
     assert os.path.exists(data_cfg.processed_features_path)
-    
+
     # Read the parquet file back and assert structure
     read_df = pd.read_parquet(data_cfg.processed_features_path)
     assert len(read_df) == 1

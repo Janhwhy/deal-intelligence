@@ -1,8 +1,9 @@
 # tests/test_ingestion/test_email_parser.py: Tests for the email_parser module.
 
 import os
-from datetime import datetime, timezone
-from src.ingestion.email_parser import clean_body, parse_email_file, crawl_enron_emails
+from datetime import datetime
+
+from src.ingestion.email_parser import clean_body, crawl_enron_emails, parse_email_file
 
 
 def test_clean_body_strips_original_message():
@@ -67,14 +68,17 @@ def test_parse_email_file(mock_data_dir):
     assert "alice@acme.com" in parsed["recipients"]
     assert parsed["subject"] == "Partnership Proposal"
     assert isinstance(parsed["timestamp"], datetime)
-    assert parsed["cleaned_body"] == "Hi Alice,\n\nHere is our business proposal for Acme SaaS."
+    assert (
+        parsed["cleaned_body"]
+        == "Hi Alice,\n\nHere is our business proposal for Acme SaaS."
+    )
 
 
 def test_crawl_enron_emails(mock_data_dir):
     """Verifies crawl_enron_emails crawls the directory tree and yields all valid emails."""
     enron_raw_dir = os.path.join(mock_data_dir, "raw", "enron")
     emails = list(crawl_enron_emails(enron_raw_dir))
-    
+
     # We wrote two emails in conftest.py
     assert len(emails) == 2
     senders = {e["sender"] for e in emails}

@@ -1,8 +1,9 @@
 # tests/test_ingestion/test_deal_linker.py: Tests for the deal_linker module.
 
 import os
-from src.ingestion.email_parser import crawl_enron_emails
+
 from src.ingestion.deal_linker import link_deals
+from src.ingestion.email_parser import crawl_enron_emails
 
 
 def test_deal_linker_determinism(mock_data_dir, mock_app_config):
@@ -26,7 +27,7 @@ def test_deal_linker_determinism(mock_data_dir, mock_app_config):
         assert d1["company_id"] == d2["company_id"]
         assert d1["company_name"] == d2["company_name"]
         assert d1["close_date"] == d2["close_date"]
-        
+
         # Verify emails list
         assert len(d1["emails"]) == len(d2["emails"])
         for e1, e2 in zip(d1["emails"], d2["emails"]):

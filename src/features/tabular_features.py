@@ -1,12 +1,13 @@
 # src/features/tabular_features.py: Tabular feature extraction and validation for deal timelines.
 
-import os
 import json
 import logging
+import os
 from datetime import datetime
-from typing import List, Dict, Any, Optional
-import pandas as pd
+from typing import Any, Dict, Optional
+
 import numpy as np
+import pandas as pd
 from pydantic import BaseModel, Field
 
 from src.config import DataConfig
@@ -146,7 +147,9 @@ def compute_deal_features(
     days_since_last_reply = None
     if email_events:
         last_email_ts = email_events[-1].timestamp
-        days_since_last_reply = max(0.0, (as_of - last_email_ts).total_seconds() / 86400.0)
+        days_since_last_reply = max(
+            0.0, (as_of - last_email_ts).total_seconds() / 86400.0
+        )
 
     # Consolidate features
     features = {
@@ -180,7 +183,9 @@ def validate_features_df(df: pd.DataFrame) -> None:
         try:
             TabularFeaturesRow(**cleaned)
         except Exception as e:
-            logger.error(f"Feature validation failed for deal row: {cleaned}. Error: {e}")
+            logger.error(
+                f"Feature validation failed for deal row: {cleaned}. Error: {e}"
+            )
             raise ValueError(f"Feature dataframe validation error: {e}")
 
 

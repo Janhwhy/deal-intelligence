@@ -1,13 +1,12 @@
 # src/ingestion/pipeline.py: Ingestion pipeline execution CLI for deal intelligence.
 
+import logging
 import os
 import sys
-import logging
-from typing import List
 
 from src.config import load_config
-from src.ingestion.email_parser import crawl_enron_emails
 from src.ingestion.deal_linker import link_deals
+from src.ingestion.email_parser import crawl_enron_emails
 from src.ingestion.timeline_builder import build_deal_timeline, save_deal_timeline
 
 # Configure logging to write to console and a pipeline log file
@@ -75,11 +74,15 @@ def run_ingestion_pipeline() -> None:
             save_deal_timeline(timeline, data_cfg.processed_deals_dir)
             save_count += 1
         except Exception as e:
-            logger.error(f"Validation or write failure for deal {deal_data['deal_id']}: {e}")
+            logger.error(
+                f"Validation or write failure for deal {deal_data['deal_id']}: {e}"
+            )
             # Fail loudly on invalid data as requested
             raise
 
-    logger.info(f"Pipeline finished successfully. Saved {save_count} deal timelines to {data_cfg.processed_deals_dir}")
+    logger.info(
+        f"Pipeline finished successfully. Saved {save_count} deal timelines to {data_cfg.processed_deals_dir}"
+    )
 
 
 if __name__ == "__main__":

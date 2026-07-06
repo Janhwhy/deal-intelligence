@@ -1,10 +1,15 @@
 # tests/test_ingestion/test_timeline_builder.py: Tests for the timeline_builder module.
 
-import os
 import json
-from src.ingestion.email_parser import crawl_enron_emails
+import os
+
 from src.ingestion.deal_linker import link_deals
-from src.ingestion.timeline_builder import build_deal_timeline, save_deal_timeline, DealTimelineModel
+from src.ingestion.email_parser import crawl_enron_emails
+from src.ingestion.timeline_builder import (
+    DealTimelineModel,
+    build_deal_timeline,
+    save_deal_timeline,
+)
 
 
 def test_timeline_validation_and_saving(mock_data_dir, mock_app_config):
@@ -12,8 +17,10 @@ def test_timeline_validation_and_saving(mock_data_dir, mock_app_config):
     enron_raw_dir = os.path.join(mock_data_dir, "raw", "enron")
     emails = list(crawl_enron_emails(enron_raw_dir))
     deals = link_deals(emails, mock_app_config.data)
-    
-    assert len(deals) == 1  # Our test emails share a domain pair/subject group, so they form 1 deal
+
+    assert (
+        len(deals) == 1
+    )  # Our test emails share a domain pair/subject group, so they form 1 deal
     deal_data = deals[0]
 
     # Build timeline model (validates with Pydantic)

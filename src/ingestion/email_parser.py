@@ -1,13 +1,12 @@
 # src/ingestion/email_parser.py: Parses raw Enron emails and cleans their body contents.
 
-import os
 import email
-from email.policy import default
 import email.utils
-import re
 import logging
-from datetime import datetime
-from typing import Generator, List, Dict, Any, Optional
+import os
+import re
+from email.policy import default
+from typing import Any, Dict, Generator, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +32,10 @@ def clean_body(body: str) -> str:
         lower_line = stripped.lower()
 
         # Check for original message markers (standard in Outlook/Enron mail clients)
-        if "-----original message-----" in lower_line or "----- original message -----" in lower_line:
+        if (
+            "-----original message-----" in lower_line
+            or "----- original message -----" in lower_line
+        ):
             break
         if "_____________________________________________" in lower_line:
             break
@@ -42,7 +44,7 @@ def clean_body(body: str) -> str:
 
         # Check for inline header pattern starting with 'From:'
         if stripped.startswith("From:") and i < len(lines) - 2:
-            subsequent = "".join(lines[i:i + 4])
+            subsequent = "".join(lines[i : i + 4])
             if "To:" in subsequent or "Sent:" in subsequent or "Subject:" in subsequent:
                 break
 
@@ -69,10 +71,22 @@ def clean_body(body: str) -> str:
 
         # Common greetings/salutations that indicate signature transition
         salutations = {
-            "thanks", "thanks,", "thank you", "thank you,",
-            "regards", "regards,", "best regards", "best regards,",
-            "best", "best,", "sincerely", "sincerely,",
-            "cheers", "cheers,", "warmly", "warmly,"
+            "thanks",
+            "thanks,",
+            "thank you",
+            "thank you,",
+            "regards",
+            "regards,",
+            "best regards",
+            "best regards,",
+            "best",
+            "best,",
+            "sincerely",
+            "sincerely,",
+            "cheers",
+            "cheers,",
+            "warmly",
+            "warmly,",
         }
         if lower_line in salutations:
             sig_start_idx = i
@@ -117,7 +131,9 @@ def parse_email_file(file_path: str) -> Optional[Dict[str, Any]]:
         try:
             timestamp = email.utils.parsedate_to_datetime(date_str)
         except Exception as e:
-            logger.warning(f"Skipping email due to unparseable Date header '{date_str}': {e}")
+            logger.warning(
+                f"Skipping email due to unparseable Date header '{date_str}': {e}"
+            )
             return None
 
         # Extract subject line

@@ -1,18 +1,19 @@
 # tests/test_features/test_tabular_features.py: Tests for the tabular_features module.
 
 from datetime import datetime, timezone
+
 import numpy as np
 import pandas as pd
 
+from src.features.tabular_features import compute_deal_features, validate_features_df
 from src.ingestion.timeline_builder import (
-    DealTimelineModel,
     ContactModel,
+    DealTimelineModel,
     EmailEventModel,
     EmailMetadataModel,
     StageChangeEventModel,
     StageChangeMetadataModel,
 )
-from src.features.tabular_features import compute_deal_features, validate_features_df
 
 
 def _build_test_timeline() -> DealTimelineModel:
@@ -160,7 +161,9 @@ def test_no_future_leakage():
 
     # Now we strip out Day 3 events manually to simulate the historical timeline as of Day 2
     timeline_past_only = _build_test_timeline()
-    timeline_past_only.events = timeline_past_only.events[:-2]  # Remove Day 3 email and stage change
+    timeline_past_only.events = timeline_past_only.events[
+        :-2
+    ]  # Remove Day 3 email and stage change
 
     features_past_only = compute_deal_features(timeline_past_only, as_of=as_of)
 
@@ -172,22 +175,25 @@ def test_no_future_leakage():
 def test_dataframe_validation_error():
     """Verifies that validate_features_df fails loudly on out-of-range value."""
     # Create invalid data (touches is negative)
-    invalid_data = [{
-        "deal_id": 1,
-        "touches": -1,  # Invalid (must be >= 0)
-        "response_latency_avg": 1.0,
-        "response_latency_median": 1.0,
-        "engagement_asymmetry": 1.0,
-        "velocity_prospecting": 1.0,
-        "velocity_demo_scheduled": 0.0,
-        "velocity_negotiation": 0.0,
-        "velocity_closed_won": 0.0,
-        "velocity_closed_lost": 0.0,
-        "stakeholder_count": 2,
-        "days_since_last_reply": 0.0,
-    }]
+    invalid_data = [
+        {
+            "deal_id": 1,
+            "touches": -1,  # Invalid (must be >= 0)
+            "response_latency_avg": 1.0,
+            "response_latency_median": 1.0,
+            "engagement_asymmetry": 1.0,
+            "velocity_prospecting": 1.0,
+            "velocity_demo_scheduled": 0.0,
+            "velocity_negotiation": 0.0,
+            "velocity_closed_won": 0.0,
+            "velocity_closed_lost": 0.0,
+            "stakeholder_count": 2,
+            "days_since_last_reply": 0.0,
+        }
+    ]
     df = pd.DataFrame(invalid_data).set_index("deal_id")
-    
+
     import pytest
+
     with pytest.raises(ValueError):
         validate_features_df(df)
