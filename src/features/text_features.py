@@ -44,6 +44,9 @@ if HAS_TORCH:
             "bertopic not installed. Using KMeans clustering fallback for BERTopic."
         )
 
+if not HAS_BERTOPIC:
+    BERTopic = Any
+
 HAS_TRANSFORMERS = False
 if HAS_TORCH:
     try:
