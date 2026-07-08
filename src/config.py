@@ -32,17 +32,29 @@ class TrainConfig:
 
 
 @dataclass
+class FeaturesConfig:
+    sbert_model_name: str
+    roberta_sentiment_model_name: str
+    bertopic_min_topic_size: int
+    batch_size: int
+    hedge_words_resource_path: str
+    processed_text_features_path: str
+    bertopic_model_dir: str
+
+
+@dataclass
 class AppConfig:
     data: DataConfig
     model: ModelConfig
     train: TrainConfig
+    features: FeaturesConfig
 
 
 def load_config(config_dir: str = None) -> AppConfig:
     """Loads and merges configuration YAML files from the configs directory.
 
     Args:
-        config_dir: Directory containing data.yaml, model.yaml, and train.yaml.
+        config_dir: Directory containing data.yaml, model.yaml, train.yaml, and features.yaml.
                     Defaults to the root 'configs/' directory.
 
     Returns:
@@ -56,14 +68,21 @@ def load_config(config_dir: str = None) -> AppConfig:
     data_path = os.path.join(config_dir, "data.yaml")
     model_path = os.path.join(config_dir, "model.yaml")
     train_path = os.path.join(config_dir, "train.yaml")
+    features_path = os.path.join(config_dir, "features.yaml")
 
     data_cfg = OmegaConf.load(data_path)
     model_cfg = OmegaConf.load(model_path)
     train_cfg = OmegaConf.load(train_path)
+    features_cfg = OmegaConf.load(features_path)
 
     # Merge into the base structure
     loaded_cfg = OmegaConf.create(
-        {"data": data_cfg, "model": model_cfg, "train": train_cfg}
+        {
+            "data": data_cfg,
+            "model": model_cfg,
+            "train": train_cfg,
+            "features": features_cfg,
+        }
     )
 
     # Validate configuration against the dataclass schema

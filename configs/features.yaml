@@ -1,0 +1,9 @@
+# configs/features.yaml: Configuration for Phase 2 text feature extraction.
+
+sbert_model_name: "all-MiniLM-L6-v2"
+roberta_sentiment_model_name: "cardiffnlp/twitter-roberta-base-sentiment-latest"
+bertopic_min_topic_size: 10
+batch_size: 32
+hedge_words_resource_path: "src/features/resources/hedge_words.txt"
+processed_text_features_path: "data/processed/text_features.parquet"
+bertopic_model_dir: "data/processed/models/bertopic_model"

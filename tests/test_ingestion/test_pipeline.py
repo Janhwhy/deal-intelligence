@@ -35,6 +35,17 @@ def test_pipeline_and_feature_extraction_end_to_end(mock_data_dir, mock_app_conf
         "lstm_hidden_size: 128\nlstm_num_layers: 1\n"
     )
     (config_dir / "train.yaml").write_text("batch_size: 32\nlearning_rate: 0.001\n")
+    features_cfg = mock_app_config.features
+    features_yaml_content = (
+        f"sbert_model_name: {features_cfg.sbert_model_name}\n"
+        f"roberta_sentiment_model_name: {features_cfg.roberta_sentiment_model_name}\n"
+        f"bertopic_min_topic_size: {features_cfg.bertopic_min_topic_size}\n"
+        f"batch_size: {features_cfg.batch_size}\n"
+        f"hedge_words_resource_path: {features_cfg.hedge_words_resource_path}\n"
+        f"processed_text_features_path: {features_cfg.processed_text_features_path}\n"
+        f"bertopic_model_dir: {features_cfg.bertopic_model_dir}\n"
+    )
+    (config_dir / "features.yaml").write_text(features_yaml_content)
 
     # Run the ingestion pipeline by mocking sys.argv to pass the temporary config_dir
     with patch.object(sys, "argv", ["pipeline.py", str(config_dir)]):

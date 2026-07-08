@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.config import AppConfig, DataConfig, ModelConfig, TrainConfig
+from src.config import AppConfig, DataConfig, FeaturesConfig, ModelConfig, TrainConfig
 
 
 @pytest.fixture
@@ -107,8 +107,19 @@ def mock_app_config(mock_data_dir):
         processed_features_path=str(processed_features_path),
     )
 
+    features_cfg = FeaturesConfig(
+        sbert_model_name="all-MiniLM-L6-v2",
+        roberta_sentiment_model_name="cardiffnlp/twitter-roberta-base-sentiment-latest",
+        bertopic_min_topic_size=10,
+        batch_size=32,
+        hedge_words_resource_path="src/features/resources/hedge_words.txt",
+        processed_text_features_path=str(processed_dir / "text_features.parquet"),
+        bertopic_model_dir=str(processed_dir / "models" / "bertopic_model"),
+    )
+
     return AppConfig(
         data=data_cfg,
         model=ModelConfig(lstm_hidden_size=128, lstm_num_layers=1),
         train=TrainConfig(batch_size=32, learning_rate=0.001),
+        features=features_cfg,
     )

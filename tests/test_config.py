@@ -15,6 +15,7 @@ def test_config_override_with_custom_yaml(tmp_path):
     data_yaml = configs_dir / "data.yaml"
     model_yaml = configs_dir / "model.yaml"
     train_yaml = configs_dir / "train.yaml"
+    features_yaml = configs_dir / "features.yaml"
 
     data_yaml.write_text(
         "enron_raw_dir: 'custom/enron/path'\n"
@@ -29,6 +30,15 @@ def test_config_override_with_custom_yaml(tmp_path):
     )
     model_yaml.write_text("lstm_hidden_size: 256\nlstm_num_layers: 3\n")
     train_yaml.write_text("batch_size: 64\nlearning_rate: 0.05\n")
+    features_yaml.write_text(
+        "sbert_model_name: 'custom-sbert'\n"
+        "roberta_sentiment_model_name: 'custom-roberta'\n"
+        "bertopic_min_topic_size: 5\n"
+        "batch_size: 16\n"
+        "hedge_words_resource_path: 'custom/hedge.txt'\n"
+        "processed_text_features_path: 'custom/text_features.parquet'\n"
+        "bertopic_model_dir: 'custom/bertopic_model'\n"
+    )
 
     # Load configuration from the custom folder path
     cfg = load_config(config_dir=str(configs_dir))
@@ -47,3 +57,10 @@ def test_config_override_with_custom_yaml(tmp_path):
     assert cfg.model.lstm_num_layers == 3
     assert cfg.train.batch_size == 64
     assert cfg.train.learning_rate == 0.05
+    assert cfg.features.sbert_model_name == "custom-sbert"
+    assert cfg.features.roberta_sentiment_model_name == "custom-roberta"
+    assert cfg.features.bertopic_min_topic_size == 5
+    assert cfg.features.batch_size == 16
+    assert cfg.features.hedge_words_resource_path == "custom/hedge.txt"
+    assert cfg.features.processed_text_features_path == "custom/text_features.parquet"
+    assert cfg.features.bertopic_model_dir == "custom/bertopic_model"

@@ -43,3 +43,6 @@ data/processed/deals/*.json
 data/processed/*.parquet
 tests/fixtures/processed/
 *.log
+
+data/processed/text_features.parquet
+data/processed/models/bertopic_model/
