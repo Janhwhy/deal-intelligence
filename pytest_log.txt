@@ -1,0 +1,174 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.4.2, pluggy-1.6.0
+rootdir: /home/runner/work/deal-intelligence/deal-intelligence
+configfile: pyproject.toml
+plugins: hydra-core-1.3.3
+collected 23 items
+
+tests/test_config.py .                                                   [  4%]
+tests/test_features/test_sequence_model.py .F.F                          [ 21%]
+tests/test_features/test_tabular_features.py ...                         [ 34%]
+tests/test_features/test_text_features.py .....                          [ 56%]
+tests/test_ingestion/test_deal_linker.py .                               [ 60%]
+tests/test_ingestion/test_email_parser.py .....                          [ 82%]
+tests/test_ingestion/test_pipeline.py .                                  [ 86%]
+tests/test_ingestion/test_timeline_builder.py .                          [ 91%]
+tests/test_smoke.py ..                                                   [100%]
+
+=================================== FAILURES ===================================
+_____________________________ test_padding_leakage _____________________________
+
+    @pytest.mark.skipif(not HAS_TORCH, reason="PyTorch not installed in this environment.")
+    def test_padding_leakage():
+        """Verifies that padding + packing prevents leakage.
+        The output for a given sequence must be identical regardless of what other
+        longer sequences it is batched with.
+        """
+        import torch
+    
+        from src.features.sequence_model import LSTMSequenceEncoder
+    
+        torch.manual_seed(42)
+        encoder = LSTMSequenceEncoder(input_size=384, hidden_size=128, num_layers=1)
+        encoder.eval()
+    
+        # Sequence A: length 2
+        # Sequence B: length 4
+        seq_a = torch.randn(1, 2, 384)
+        seq_b = torch.randn(1, 4, 384)
+    
+        # 1. Run Sequence A alone
+        with torch.no_grad():
+            out_a_alone = encoder(seq_a, torch.tensor([2], dtype=torch.long))
+    
+        # 2. Run Sequence A and B batched together with padding
+        padded_x = torch.zeros(2, 4, 384)
+        padded_x[0, :2] = seq_a[0]
+        padded_x[1, :4] = seq_b[0]
+        lengths = torch.tensor([2, 4], dtype=torch.long)
+    
+        with torch.no_grad():
+            out_batched = encoder(padded_x, lengths)
+    
+        # The first element in the batch corresponds to sequence A
+        out_a_batched = out_batched[0:1]
+    
+        # Verify no padding leakage (must be identical)
+>       assert torch.allclose(out_a_alone, out_a_batched, atol=1e-5)
+E       AssertionError: assert False
+E        +  where False = <built-in method allclose of type object at 0x7ff4fe342d60>(tensor([[ 0.0777, -0.0336,  0.3027,  0.0305, -0.1051, -0.2916,  0.3137, -0.0519,\n         -0.2013, -0.1569, -0.2641,  ... -0.0377, -0.5949, -0.2614,  0.0668,\n          0.0611,  0.4455,  0.0661, -0.1089, -0.1523, -0.6169,  0.0607, -0.2989]]), tensor([[ 0.0536,  0.1450, -0.1097, -0.1547, -0.0705, -0.0386,  0.2763,  0.1258,\n         -0.0453,  0.2425, -0.1022, -...  0.3604, -0.1373,  0.3537,  0.2727,\n         -0.0573,  0.1515,  0.1995, -0.0238,  0.0703,  0.1540,  0.0779, -0.1308]]), atol=1e-05)
+E        +    where <built-in method allclose of type object at 0x7ff4fe342d60> = <module 'torch' from '/home/runner/work/deal-intelligence/deal-intelligence/.venv/lib/python3.12/site-packages/torch/__init__.py'>.allclose
+
+tests/test_features/test_sequence_model.py:78: AssertionError
+___________________________ test_single_message_deal ___________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-0/test_single_message_deal0')
+
+    @pytest.mark.skipif(not HAS_TORCH, reason="PyTorch not installed in this environment.")
+    def test_single_message_deal(tmp_path):
+        """Verifies Dataset and DataLoader handle a deal timeline with only 1 message (seq len 1)."""
+        from torch.utils.data import DataLoader
+    
+        from src.features.sequence_dataset import (
+            DealSequenceDataset,
+            collate_padded_sequences,
+        )
+    
+        deals_dir = tmp_path / "deals"
+        deals_dir.mkdir()
+    
+        # Write a single message deal timeline
+        deal_data = {
+            "deal_id": 99,
+            "company_id": 990,
+            "company_name": "Single Message Corp",
+            "amount": 50000.0,
+            "stage": "Closed Won",
+            "outcome": "won",
+            "close_date": "2026-07-08T12:00:00Z",
+            "events": [
+                {
+                    "type": "email",
+                    "timestamp": "2026-07-08T10:00:00Z",
+                    "metadata": {
+                        "message_id": "<msg-99-1@enron.com>",
+                        "sender": "sender@enron.com",
+                        "recipients": ["buyer@external.com"],
+                        "subject": "Initial Pitch",
+                    },
+                    "content": "Let's kick off the contract discussion.",
+                }
+            ],
+        }
+    
+        with open(os.path.join(deals_dir, "99.json"), "w", encoding="utf-8") as f:
+            json.dump(deal_data, f, indent=2)
+    
+        # Initialize dataset
+>       dataset = DealSequenceDataset(
+            deals_dir=str(deals_dir), sbert_model_name="all-MiniLM-L6-v2"
+        )
+
+tests/test_features/test_sequence_model.py:147: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/features/sequence_dataset.py:43: in __init__
+    self._load_and_process_timelines()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <src.features.sequence_dataset.DealSequenceDataset object at 0x7ff4cc6aa7e0>
+
+    def _load_and_process_timelines(self) -> None:
+        """Crawl all timelines, build a corpus of all emails, extract embeddings,
+    
+        and segment them back into chronological sequences per deal.
+        """
+        all_emails: List[str] = []
+        self.deal_ids: List[int] = []
+        self.outcomes: List[float] = []
+        self.deal_email_counts: List[int] = []
+    
+        for filename in self.deal_files:
+            filepath = os.path.join(self.deals_dir, filename)
+            with open(filepath, "r", encoding="utf-8") as f:
+                data = json.load(f)
+>           timeline = DealTimelineModel(**data)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           pydantic_core._pydantic_core.ValidationError: 5 validation errors for DealTimelineModel
+E           industry
+E             Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
+E               For further information visit https://errors.pydantic.dev/2.13/v/missing
+E           annual_revenue
+E             Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
+E               For further information visit https://errors.pydantic.dev/2.13/v/missing
+E           num_employees
+E             Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
+E               For further information visit https://errors.pydantic.dev/2.13/v/missing
+E           country
+E             Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
+E               For further information visit https://errors.pydantic.dev/2.13/v/missing
+E           contacts
+E             Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
+E               For further information visit https://errors.pydantic.dev/2.13/v/missing
+
+src/features/sequence_dataset.py:59: ValidationError
+=========================== short test summary info ============================
+FAILED tests/test_features/test_sequence_model.py::test_padding_leakage - AssertionError: assert False
+ +  where False = <built-in method allclose of type object at 0x7ff4fe342d60>(tensor([[ 0.0777, -0.0336,  0.3027,  0.0305, -0.1051, -0.2916,  0.3137, -0.0519,\n         -0.2013, -0.1569, -0.2641,  ... -0.0377, -0.5949, -0.2614,  0.0668,\n          0.0611,  0.4455,  0.0661, -0.1089, -0.1523, -0.6169,  0.0607, -0.2989]]), tensor([[ 0.0536,  0.1450, -0.1097, -0.1547, -0.0705, -0.0386,  0.2763,  0.1258,\n         -0.0453,  0.2425, -0.1022, -...  0.3604, -0.1373,  0.3537,  0.2727,\n         -0.0573,  0.1515,  0.1995, -0.0238,  0.0703,  0.1540,  0.0779, -0.1308]]), atol=1e-05)
+ +    where <built-in method allclose of type object at 0x7ff4fe342d60> = <module 'torch' from '/home/runner/work/deal-intelligence/deal-intelligence/.venv/lib/python3.12/site-packages/torch/__init__.py'>.allclose
+FAILED tests/test_features/test_sequence_model.py::test_single_message_deal - pydantic_core._pydantic_core.ValidationError: 5 validation errors for DealTimelineModel
+industry
+  Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+annual_revenue
+  Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+num_employees
+  Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+country
+  Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+contacts
+  Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+========================= 2 failed, 21 passed in 7.50s =========================
