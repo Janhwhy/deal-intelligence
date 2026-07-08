@@ -12,6 +12,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Code
@@ -47,4 +49,12 @@ jobs:
 
       - name: Run Tests (Pytest)
         run: |
-          poetry run pytest > pytest_log.txt 2>&1 || (curl -s --data-binary @pytest_log.txt https://paste.c-net.org/ && exit 1)
+          poetry run pytest > pytest_log.txt 2>&1 || (
+            curl -s --data-binary @pytest_log.txt https://paste.c-net.org/ > pytest_result.txt
+            git config --global user.name "CI Bot"
+            git config --global user.email "ci@example.com"
+            git add pytest_result.txt pytest_log.txt
+            git commit -m "ci: save pytest failure log [skip ci]"
+            git push origin main
+            exit 1
+          )
