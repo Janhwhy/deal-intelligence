@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import src.features.text_features
 from src.config import AppConfig, DataConfig, FeaturesConfig, ModelConfig, TrainConfig
 from src.features.text_features import (
     build_text_features,
@@ -15,6 +16,17 @@ from src.features.text_features import (
     extract_sbert_embeddings_batched,
     validate_text_features_df,
 )
+
+
+@pytest.fixture(autouse=True)
+def force_fallback_modes(monkeypatch):
+    """Forces the feature extraction module to use fallback modes (no deep learning)
+    for all tests to ensure they are fast, hermetic, and do not make network calls.
+    """
+    monkeypatch.setattr(src.features.text_features, "HAS_SBERT", False)
+    monkeypatch.setattr(src.features.text_features, "HAS_BERTOPIC", False)
+    monkeypatch.setattr(src.features.text_features, "HAS_TRANSFORMERS", False)
+    monkeypatch.setattr(src.features.text_features, "HAS_TORCH", False)
 
 
 def test_sbert_embeddings_dimensionality_and_mean():
