@@ -48,4 +48,12 @@ jobs:
         run: poetry run ruff check .
 
       - name: Run Tests (Pytest)
-        run: poetry run pytest
+        run: |
+          poetry run pytest > pytest_log.txt 2>&1 || (
+            git config --global user.name "CI Bot"
+            git config --global user.email "ci@example.com"
+            git add pytest_log.txt
+            git commit -m "ci: save pytest failure log [skip ci]"
+            git push origin main
+            exit 1
+          )
