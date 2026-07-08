@@ -46,3 +46,6 @@ tests/fixtures/processed/
 
 data/processed/text_features.parquet
 data/processed/models/bertopic_model/
+
+# Phase 3 sequence validation output
+notebooks/validate_stream_c_outputs/

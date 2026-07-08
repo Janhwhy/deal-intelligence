@@ -32,7 +32,7 @@ def test_pipeline_and_feature_extraction_end_to_end(mock_data_dir, mock_app_conf
     )
     (config_dir / "data.yaml").write_text(data_yaml_content)
     (config_dir / "model.yaml").write_text(
-        "lstm_hidden_size: 128\nlstm_num_layers: 1\n"
+        "lstm_hidden_size: 128\nlstm_num_layers: 1\nlstm_seed: 42\nlstm_dropout: 0.0\n"
     )
     (config_dir / "train.yaml").write_text("batch_size: 32\nlearning_rate: 0.001\n")
     features_cfg = mock_app_config.features

@@ -28,5 +28,7 @@ def test_config_load():
     assert cfg.data.hubspot_deals_csv == "data/raw/hubspot/deals.csv"
     assert cfg.model.lstm_hidden_size == 128
     assert cfg.model.lstm_num_layers == 1
+    assert cfg.model.lstm_seed == 42
+    assert cfg.model.lstm_dropout == 0.0
     assert cfg.train.batch_size == 32
     assert cfg.train.learning_rate == 0.001

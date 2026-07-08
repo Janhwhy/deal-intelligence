@@ -28,7 +28,9 @@ def test_config_override_with_custom_yaml(tmp_path):
         "processed_deals_dir: 'custom/deals'\n"
         "processed_features_path: 'custom/features.parquet'\n"
     )
-    model_yaml.write_text("lstm_hidden_size: 256\nlstm_num_layers: 3\n")
+    model_yaml.write_text(
+        "lstm_hidden_size: 256\nlstm_num_layers: 3\nlstm_seed: 101\nlstm_dropout: 0.1\n"
+    )
     train_yaml.write_text("batch_size: 64\nlearning_rate: 0.05\n")
     features_yaml.write_text(
         "sbert_model_name: 'custom-sbert'\n"
@@ -55,6 +57,8 @@ def test_config_override_with_custom_yaml(tmp_path):
     assert cfg.data.processed_features_path == "custom/features.parquet"
     assert cfg.model.lstm_hidden_size == 256
     assert cfg.model.lstm_num_layers == 3
+    assert cfg.model.lstm_seed == 101
+    assert cfg.model.lstm_dropout == 0.1
     assert cfg.train.batch_size == 64
     assert cfg.train.learning_rate == 0.05
     assert cfg.features.sbert_model_name == "custom-sbert"

@@ -2,3 +2,5 @@
 
 lstm_hidden_size: 128
 lstm_num_layers: 1
+lstm_seed: 42
+lstm_dropout: 0.0

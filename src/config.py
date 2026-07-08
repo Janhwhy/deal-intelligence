@@ -23,6 +23,8 @@ class DataConfig:
 class ModelConfig:
     lstm_hidden_size: int
     lstm_num_layers: int
+    lstm_seed: int
+    lstm_dropout: float
 
 
 @dataclass

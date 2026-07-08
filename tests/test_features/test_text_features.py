@@ -298,7 +298,9 @@ def test_deal_id_alignment(tmp_path):
 
     config = AppConfig(
         data=data_cfg,
-        model=ModelConfig(lstm_hidden_size=128, lstm_num_layers=1),
+        model=ModelConfig(
+            lstm_hidden_size=128, lstm_num_layers=1, lstm_seed=42, lstm_dropout=0.0
+        ),
         train=TrainConfig(batch_size=32, learning_rate=0.001),
         features=features_cfg,
     )

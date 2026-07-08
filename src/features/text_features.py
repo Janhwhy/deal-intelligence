@@ -342,6 +342,22 @@ def extract_sbert_embeddings_batched(
         return np.vstack(vectors)
 
 
+def extract_sbert_embeddings_per_message(
+    texts: List[str], model_name: str, batch_size: int
+) -> np.ndarray:
+    """Extracts raw per-message SBERT embeddings before any pooling.
+
+    Args:
+        texts: List of message strings.
+        model_name: Name of the SentenceTransformer model.
+        batch_size: Inference batch size.
+
+    Returns:
+        Numpy array of shape (len(texts), 384).
+    """
+    return extract_sbert_embeddings_batched(texts, model_name, batch_size)
+
+
 def extract_roberta_sentiment_batched(
     texts: List[str], model_name: str, batch_size: int
 ) -> List[float]:
