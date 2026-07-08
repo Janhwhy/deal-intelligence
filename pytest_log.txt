@@ -5,15 +5,81 @@ configfile: pyproject.toml
 plugins: hydra-core-1.3.3
 collected 23 items
 
-tests/test_config.py .                                                   [  4%]
-tests/test_features/test_sequence_model.py .F.F                          [ 21%]
-tests/test_features/test_tabular_features.py ...                         [ 34%]
-tests/test_features/test_text_features.py .....                          [ 56%]
-tests/test_ingestion/test_deal_linker.py .                               [ 60%]
-tests/test_ingestion/test_email_parser.py .....                          [ 82%]
-tests/test_ingestion/test_pipeline.py .                                  [ 86%]
-tests/test_ingestion/test_timeline_builder.py .                          [ 91%]
-tests/test_smoke.py ..                                                   [100%]
+tests/test_config.py .
+tests/test_features/test_sequence_model.py .DEBUG - out_a_alone: tensor([[ 0.0777, -0.0336,  0.3027,  0.0305, -0.1051, -0.2916,  0.3137, -0.0519,
+         -0.2013, -0.1569, -0.2641,  0.1198, -0.0236, -0.1494, -0.0776,  0.0697,
+         -0.0768, -0.1574,  0.0312, -0.2912, -0.0841, -0.1657, -0.0424, -0.2315,
+          0.2888, -0.0462, -0.1631, -0.6739, -0.2549, -0.3419, -0.2074,  0.1444,
+         -0.0840, -0.1098,  0.0169, -0.2356, -0.0134, -0.0074,  0.1002,  0.1483,
+         -0.0630, -0.1284, -0.1496, -0.5232, -0.1505,  0.0665,  0.1005, -0.0008,
+         -0.0425, -0.3022,  0.0468,  0.5156,  0.1624, -0.0203, -0.1438,  0.1426,
+          0.3132, -0.1526,  0.4987,  0.1112, -0.0899, -0.1641,  0.1165, -0.2581,
+         -0.5294, -0.0367, -0.0886,  0.0557, -0.4361,  0.0308,  0.4027, -0.0611,
+         -0.0784,  0.0377, -0.4097,  0.0766, -0.3485, -0.0820, -0.1045,  0.1156,
+         -0.0930, -0.3321,  0.0134, -0.1204, -0.0676, -0.3993,  0.2112, -0.2531,
+          0.4386,  0.0201,  0.3794,  0.4440,  0.2106, -0.0703, -0.0782,  0.2076,
+         -0.0514, -0.5813, -0.0748,  0.1526, -0.0334,  0.3773,  0.2568, -0.1426,
+          0.1092, -0.0970, -0.0784,  0.1459,  0.0835,  0.0807, -0.1102,  0.0165,
+          0.0991, -0.3109,  0.2830, -0.1380, -0.0377, -0.5949, -0.2614,  0.0668,
+          0.0611,  0.4455,  0.0661, -0.1089, -0.1523, -0.6169,  0.0607, -0.2989]])
+DEBUG - out_a_batched: tensor([[ 0.0536,  0.1450, -0.1097, -0.1547, -0.0705, -0.0386,  0.2763,  0.1258,
+         -0.0453,  0.2425, -0.1022, -0.0187,  0.3196,  0.0473,  0.0777,  0.2308,
+          0.2421, -0.0906,  0.0921,  0.0618,  0.0206, -0.0082, -0.0223, -0.0362,
+         -0.0448, -0.1344,  0.0081,  0.0177,  0.4966, -0.3794,  0.3441,  0.1078,
+          0.0198, -0.2721,  0.0466, -0.4211,  0.0772,  0.0171,  0.0178,  0.0547,
+          0.3054,  0.0301, -0.0287, -0.0834, -0.2997,  0.0247, -0.1646,  0.0099,
+         -0.3779, -0.0498,  0.1214,  0.1824, -0.0622,  0.3295,  0.1544,  0.0069,
+          0.0109,  0.4092,  0.3785,  0.0868, -0.0974, -0.3270, -0.0565, -0.1161,
+          0.1230,  0.2875, -0.2770,  0.0327, -0.2886,  0.0486,  0.0763,  0.0589,
+         -0.3259, -0.0953,  0.0890, -0.0892, -0.2033, -0.1348,  0.0266,  0.0378,
+          0.1328, -0.3419, -0.3114,  0.3520,  0.2128,  0.3722,  0.1141, -0.0930,
+         -0.2327,  0.1396,  0.1847, -0.1969, -0.0357,  0.0233, -0.0129, -0.0822,
+         -0.0337,  0.4204, -0.0302, -0.4458,  0.2602,  0.0475, -0.5275,  0.0776,
+          0.1578,  0.3689,  0.0688,  0.1226,  0.1146,  0.2122,  0.2074, -0.0074,
+         -0.1278, -0.0887, -0.0289,  0.1337,  0.3604, -0.1373,  0.3537,  0.2727,
+         -0.0573,  0.1515,  0.1995, -0.0238,  0.0703,  0.1540,  0.0779, -0.1308]])
+DEBUG - out_batched: tensor([[ 0.0536,  0.1450, -0.1097, -0.1547, -0.0705, -0.0386,  0.2763,  0.1258,
+         -0.0453,  0.2425, -0.1022, -0.0187,  0.3196,  0.0473,  0.0777,  0.2308,
+          0.2421, -0.0906,  0.0921,  0.0618,  0.0206, -0.0082, -0.0223, -0.0362,
+         -0.0448, -0.1344,  0.0081,  0.0177,  0.4966, -0.3794,  0.3441,  0.1078,
+          0.0198, -0.2721,  0.0466, -0.4211,  0.0772,  0.0171,  0.0178,  0.0547,
+          0.3054,  0.0301, -0.0287, -0.0834, -0.2997,  0.0247, -0.1646,  0.0099,
+         -0.3779, -0.0498,  0.1214,  0.1824, -0.0622,  0.3295,  0.1544,  0.0069,
+          0.0109,  0.4092,  0.3785,  0.0868, -0.0974, -0.3270, -0.0565, -0.1161,
+          0.1230,  0.2875, -0.2770,  0.0327, -0.2886,  0.0486,  0.0763,  0.0589,
+         -0.3259, -0.0953,  0.0890, -0.0892, -0.2033, -0.1348,  0.0266,  0.0378,
+          0.1328, -0.3419, -0.3114,  0.3520,  0.2128,  0.3722,  0.1141, -0.0930,
+         -0.2327,  0.1396,  0.1847, -0.1969, -0.0357,  0.0233, -0.0129, -0.0822,
+         -0.0337,  0.4204, -0.0302, -0.4458,  0.2602,  0.0475, -0.5275,  0.0776,
+          0.1578,  0.3689,  0.0688,  0.1226,  0.1146,  0.2122,  0.2074, -0.0074,
+         -0.1278, -0.0887, -0.0289,  0.1337,  0.3604, -0.1373,  0.3537,  0.2727,
+         -0.0573,  0.1515,  0.1995, -0.0238,  0.0703,  0.1540,  0.0779, -0.1308],
+        [ 0.0777, -0.0336,  0.3027,  0.0305, -0.1051, -0.2916,  0.3137, -0.0519,
+         -0.2013, -0.1569, -0.2641,  0.1198, -0.0236, -0.1494, -0.0776,  0.0697,
+         -0.0768, -0.1574,  0.0312, -0.2912, -0.0841, -0.1657, -0.0424, -0.2315,
+          0.2888, -0.0462, -0.1631, -0.6739, -0.2549, -0.3419, -0.2074,  0.1444,
+         -0.0840, -0.1098,  0.0169, -0.2356, -0.0134, -0.0074,  0.1002,  0.1483,
+         -0.0630, -0.1284, -0.1496, -0.5232, -0.1505,  0.0665,  0.1005, -0.0008,
+         -0.0425, -0.3022,  0.0468,  0.5156,  0.1624, -0.0203, -0.1438,  0.1426,
+          0.3132, -0.1526,  0.4987,  0.1112, -0.0899, -0.1641,  0.1165, -0.2581,
+         -0.5294, -0.0367, -0.0886,  0.0557, -0.4361,  0.0308,  0.4027, -0.0611,
+         -0.0784,  0.0377, -0.4097,  0.0766, -0.3485, -0.0820, -0.1045,  0.1156,
+         -0.0930, -0.3321,  0.0134, -0.1204, -0.0676, -0.3993,  0.2112, -0.2531,
+          0.4386,  0.0201,  0.3794,  0.4440,  0.2106, -0.0703, -0.0782,  0.2076,
+         -0.0514, -0.5813, -0.0748,  0.1526, -0.0334,  0.3773,  0.2568, -0.1426,
+          0.1092, -0.0970, -0.0784,  0.1459,  0.0835,  0.0807, -0.1102,  0.0165,
+          0.0991, -0.3109,  0.2830, -0.1380, -0.0377, -0.5949, -0.2614,  0.0668,
+          0.0611,  0.4455,  0.0661, -0.1089, -0.1523, -0.6169,  0.0607, -0.2989]])
+DEBUG - unsorted_indices: tensor([1, 0])
+DEBUG - sorted_indices: tensor([1, 0])
+F..
+tests/test_features/test_tabular_features.py ...
+tests/test_features/test_text_features.py .....
+tests/test_ingestion/test_deal_linker.py .
+tests/test_ingestion/test_email_parser.py .....
+tests/test_ingestion/test_pipeline.py .
+tests/test_ingestion/test_timeline_builder.py .
+tests/test_smoke.py ..
 
 =================================== FAILURES ===================================
 _____________________________ test_padding_leakage _____________________________
@@ -53,122 +119,36 @@ _____________________________ test_padding_leakage _____________________________
         # The first element in the batch corresponds to sequence A
         out_a_batched = out_batched[0:1]
     
+        # Debug print statements
+        print("DEBUG - out_a_alone:", out_a_alone)
+        print("DEBUG - out_a_batched:", out_a_batched)
+        print("DEBUG - out_batched:", out_batched)
+        print(
+            "DEBUG - unsorted_indices:",
+            (
+                encoder.last_unsorted_indices
+                if hasattr(encoder, "last_unsorted_indices")
+                else "N/A"
+            ),
+        )
+        print(
+            "DEBUG - sorted_indices:",
+            (
+                encoder.last_sorted_indices
+                if hasattr(encoder, "last_sorted_indices")
+                else "N/A"
+            ),
+        )
+    
         # Verify no padding leakage (must be identical)
 >       assert torch.allclose(out_a_alone, out_a_batched, atol=1e-5)
 E       AssertionError: assert False
-E        +  where False = <built-in method allclose of type object at 0x7ff4fe342d60>(tensor([[ 0.0777, -0.0336,  0.3027,  0.0305, -0.1051, -0.2916,  0.3137, -0.0519,\n         -0.2013, -0.1569, -0.2641,  ... -0.0377, -0.5949, -0.2614,  0.0668,\n          0.0611,  0.4455,  0.0661, -0.1089, -0.1523, -0.6169,  0.0607, -0.2989]]), tensor([[ 0.0536,  0.1450, -0.1097, -0.1547, -0.0705, -0.0386,  0.2763,  0.1258,\n         -0.0453,  0.2425, -0.1022, -...  0.3604, -0.1373,  0.3537,  0.2727,\n         -0.0573,  0.1515,  0.1995, -0.0238,  0.0703,  0.1540,  0.0779, -0.1308]]), atol=1e-05)
-E        +    where <built-in method allclose of type object at 0x7ff4fe342d60> = <module 'torch' from '/home/runner/work/deal-intelligence/deal-intelligence/.venv/lib/python3.12/site-packages/torch/__init__.py'>.allclose
+E        +  where False = <built-in method allclose of type object at 0x7f1297542d60>(tensor([[ 0.0777, -0.0336,  0.3027,  0.0305, -0.1051, -0.2916,  0.3137, -0.0519,\n         -0.2013, -0.1569, -0.2641,  ... -0.0377, -0.5949, -0.2614,  0.0668,\n          0.0611,  0.4455,  0.0661, -0.1089, -0.1523, -0.6169,  0.0607, -0.2989]]), tensor([[ 0.0536,  0.1450, -0.1097, -0.1547, -0.0705, -0.0386,  0.2763,  0.1258,\n         -0.0453,  0.2425, -0.1022, -...  0.3604, -0.1373,  0.3537,  0.2727,\n         -0.0573,  0.1515,  0.1995, -0.0238,  0.0703,  0.1540,  0.0779, -0.1308]]), atol=1e-05)
+E        +    where <built-in method allclose of type object at 0x7f1297542d60> = <module 'torch' from '/home/runner/work/deal-intelligence/deal-intelligence/.venv/lib/python3.12/site-packages/torch/__init__.py'>.allclose
 
-tests/test_features/test_sequence_model.py:78: AssertionError
-___________________________ test_single_message_deal ___________________________
-
-tmp_path = PosixPath('/tmp/pytest-of-runner/pytest-0/test_single_message_deal0')
-
-    @pytest.mark.skipif(not HAS_TORCH, reason="PyTorch not installed in this environment.")
-    def test_single_message_deal(tmp_path):
-        """Verifies Dataset and DataLoader handle a deal timeline with only 1 message (seq len 1)."""
-        from torch.utils.data import DataLoader
-    
-        from src.features.sequence_dataset import (
-            DealSequenceDataset,
-            collate_padded_sequences,
-        )
-    
-        deals_dir = tmp_path / "deals"
-        deals_dir.mkdir()
-    
-        # Write a single message deal timeline
-        deal_data = {
-            "deal_id": 99,
-            "company_id": 990,
-            "company_name": "Single Message Corp",
-            "amount": 50000.0,
-            "stage": "Closed Won",
-            "outcome": "won",
-            "close_date": "2026-07-08T12:00:00Z",
-            "events": [
-                {
-                    "type": "email",
-                    "timestamp": "2026-07-08T10:00:00Z",
-                    "metadata": {
-                        "message_id": "<msg-99-1@enron.com>",
-                        "sender": "sender@enron.com",
-                        "recipients": ["buyer@external.com"],
-                        "subject": "Initial Pitch",
-                    },
-                    "content": "Let's kick off the contract discussion.",
-                }
-            ],
-        }
-    
-        with open(os.path.join(deals_dir, "99.json"), "w", encoding="utf-8") as f:
-            json.dump(deal_data, f, indent=2)
-    
-        # Initialize dataset
->       dataset = DealSequenceDataset(
-            deals_dir=str(deals_dir), sbert_model_name="all-MiniLM-L6-v2"
-        )
-
-tests/test_features/test_sequence_model.py:147: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-src/features/sequence_dataset.py:43: in __init__
-    self._load_and_process_timelines()
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <src.features.sequence_dataset.DealSequenceDataset object at 0x7ff4cc6aa7e0>
-
-    def _load_and_process_timelines(self) -> None:
-        """Crawl all timelines, build a corpus of all emails, extract embeddings,
-    
-        and segment them back into chronological sequences per deal.
-        """
-        all_emails: List[str] = []
-        self.deal_ids: List[int] = []
-        self.outcomes: List[float] = []
-        self.deal_email_counts: List[int] = []
-    
-        for filename in self.deal_files:
-            filepath = os.path.join(self.deals_dir, filename)
-            with open(filepath, "r", encoding="utf-8") as f:
-                data = json.load(f)
->           timeline = DealTimelineModel(**data)
-                       ^^^^^^^^^^^^^^^^^^^^^^^^^
-E           pydantic_core._pydantic_core.ValidationError: 5 validation errors for DealTimelineModel
-E           industry
-E             Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
-E               For further information visit https://errors.pydantic.dev/2.13/v/missing
-E           annual_revenue
-E             Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
-E               For further information visit https://errors.pydantic.dev/2.13/v/missing
-E           num_employees
-E             Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
-E               For further information visit https://errors.pydantic.dev/2.13/v/missing
-E           country
-E             Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
-E               For further information visit https://errors.pydantic.dev/2.13/v/missing
-E           contacts
-E             Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
-E               For further information visit https://errors.pydantic.dev/2.13/v/missing
-
-src/features/sequence_dataset.py:59: ValidationError
+tests/test_features/test_sequence_model.py:99: AssertionError
 =========================== short test summary info ============================
 FAILED tests/test_features/test_sequence_model.py::test_padding_leakage - AssertionError: assert False
- +  where False = <built-in method allclose of type object at 0x7ff4fe342d60>(tensor([[ 0.0777, -0.0336,  0.3027,  0.0305, -0.1051, -0.2916,  0.3137, -0.0519,\n         -0.2013, -0.1569, -0.2641,  ... -0.0377, -0.5949, -0.2614,  0.0668,\n          0.0611,  0.4455,  0.0661, -0.1089, -0.1523, -0.6169,  0.0607, -0.2989]]), tensor([[ 0.0536,  0.1450, -0.1097, -0.1547, -0.0705, -0.0386,  0.2763,  0.1258,\n         -0.0453,  0.2425, -0.1022, -...  0.3604, -0.1373,  0.3537,  0.2727,\n         -0.0573,  0.1515,  0.1995, -0.0238,  0.0703,  0.1540,  0.0779, -0.1308]]), atol=1e-05)
- +    where <built-in method allclose of type object at 0x7ff4fe342d60> = <module 'torch' from '/home/runner/work/deal-intelligence/deal-intelligence/.venv/lib/python3.12/site-packages/torch/__init__.py'>.allclose
-FAILED tests/test_features/test_sequence_model.py::test_single_message_deal - pydantic_core._pydantic_core.ValidationError: 5 validation errors for DealTimelineModel
-industry
-  Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
-    For further information visit https://errors.pydantic.dev/2.13/v/missing
-annual_revenue
-  Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
-    For further information visit https://errors.pydantic.dev/2.13/v/missing
-num_employees
-  Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
-    For further information visit https://errors.pydantic.dev/2.13/v/missing
-country
-  Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
-    For further information visit https://errors.pydantic.dev/2.13/v/missing
-contacts
-  Field required [type=missing, input_value={'deal_id': 99, 'company_...contract discussion."}]}, input_type=dict]
-    For further information visit https://errors.pydantic.dev/2.13/v/missing
-========================= 2 failed, 21 passed in 7.50s =========================
+ +  where False = <built-in method allclose of type object at 0x7f1297542d60>(tensor([[ 0.0777, -0.0336,  0.3027,  0.0305, -0.1051, -0.2916,  0.3137, -0.0519,\n         -0.2013, -0.1569, -0.2641,  ... -0.0377, -0.5949, -0.2614,  0.0668,\n          0.0611,  0.4455,  0.0661, -0.1089, -0.1523, -0.6169,  0.0607, -0.2989]]), tensor([[ 0.0536,  0.1450, -0.1097, -0.1547, -0.0705, -0.0386,  0.2763,  0.1258,\n         -0.0453,  0.2425, -0.1022, -...  0.3604, -0.1373,  0.3537,  0.2727,\n         -0.0573,  0.1515,  0.1995, -0.0238,  0.0703,  0.1540,  0.0779, -0.1308]]), atol=1e-05)
+ +    where <built-in method allclose of type object at 0x7f1297542d60> = <module 'torch' from '/home/runner/work/deal-intelligence/deal-intelligence/.venv/lib/python3.12/site-packages/torch/__init__.py'>.allclose
+========================= 1 failed, 22 passed in 7.91s =========================
