@@ -74,6 +74,13 @@ def test_padding_leakage():
     # The first element in the batch corresponds to sequence A
     out_a_batched = out_batched[0:1]
 
+    # Debug print statements
+    print("DEBUG - out_a_alone:", out_a_alone)
+    print("DEBUG - out_a_batched:", out_a_batched)
+    print("DEBUG - out_batched:", out_batched)
+    print("DEBUG - unsorted_indices:", encoder.last_unsorted_indices if hasattr(encoder, 'last_unsorted_indices') else "N/A")
+    print("DEBUG - sorted_indices:", encoder.last_sorted_indices if hasattr(encoder, 'last_sorted_indices') else "N/A")
+
     # Verify no padding leakage (must be identical)
     assert torch.allclose(out_a_alone, out_a_batched, atol=1e-5)
 
@@ -125,6 +132,11 @@ def test_single_message_deal(tmp_path):
         "stage": "Closed Won",
         "outcome": "won",
         "close_date": "2026-07-08T12:00:00Z",
+        "industry": "Tech",
+        "annual_revenue": 1000000.0,
+        "num_employees": 50,
+        "country": "USA",
+        "contacts": [],
         "events": [
             {
                 "type": "email",

@@ -79,6 +79,9 @@ if HAS_TORCH:
             # When enforce_sorted=False, PyTorch sorts sequences internally;
             # LSTM output hidden states (h_n) remain sorted and must be unsorted manually.
             unsorted_indices = packed_input.unsorted_indices
+            self.last_unsorted_indices = unsorted_indices
+            self.last_sorted_indices = packed_input.sorted_indices
+            
             final_state = final_state.index_select(
                 0, unsorted_indices.to(final_state.device)
             )
