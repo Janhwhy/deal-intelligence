@@ -74,27 +74,6 @@ def test_padding_leakage():
     # The first element in the batch corresponds to sequence A
     out_a_batched = out_batched[0:1]
 
-    # Debug print statements
-    print("DEBUG - out_a_alone:", out_a_alone)
-    print("DEBUG - out_a_batched:", out_a_batched)
-    print("DEBUG - out_batched:", out_batched)
-    print(
-        "DEBUG - unsorted_indices:",
-        (
-            encoder.last_unsorted_indices
-            if hasattr(encoder, "last_unsorted_indices")
-            else "N/A"
-        ),
-    )
-    print(
-        "DEBUG - sorted_indices:",
-        (
-            encoder.last_sorted_indices
-            if hasattr(encoder, "last_sorted_indices")
-            else "N/A"
-        ),
-    )
-
     # Verify no padding leakage (must be identical)
     assert torch.allclose(out_a_alone, out_a_batched, atol=1e-5)
 
