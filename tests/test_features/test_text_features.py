@@ -1,20 +1,18 @@
 # tests/test_features/test_text_features.py: Tests for Phase 2 text features.
 
-import os
 import json
-import pytest
+import os
+
 import numpy as np
 import pandas as pd
-from datetime import datetime, timezone
+import pytest
 
 from src.config import AppConfig, DataConfig, FeaturesConfig, ModelConfig, TrainConfig
 from src.features.text_features import (
+    build_text_features,
     compute_hedge_word_density,
     compute_sentiment_slope,
-    compute_cosine_distance,
     extract_sbert_embeddings_batched,
-    extract_roberta_sentiment_batched,
-    build_text_features,
     validate_text_features_df,
 )
 
@@ -27,7 +25,9 @@ def test_sbert_embeddings_dimensionality_and_mean():
     texts = ["Hello world", "This is a test message."]
 
     # Extract embeddings (which runs the fallback or real SBERT depending on environment)
-    embeddings = extract_sbert_embeddings_batched(texts, "all-MiniLM-L6-v2", batch_size=32)
+    embeddings = extract_sbert_embeddings_batched(
+        texts, "all-MiniLM-L6-v2", batch_size=32
+    )
 
     # Dimensionality check: must be shape (2, 384)
     assert embeddings.shape == (2, 384)
@@ -172,8 +172,8 @@ def test_deal_id_alignment(tmp_path):
                     "sender": "bob@enron.com",
                     "recipients": ["alice@company.com"],
                     "subject": "Proposal",
-                    "message_id": "m1"
-                }
+                    "message_id": "m1",
+                },
             },
             {
                 "timestamp": "2025-01-02T10:00:00Z",
@@ -183,10 +183,10 @@ def test_deal_id_alignment(tmp_path):
                     "sender": "alice@company.com",
                     "recipients": ["bob@enron.com"],
                     "subject": "RE: Proposal",
-                    "message_id": "m2"
-                }
-            }
-        ]
+                    "message_id": "m2",
+                },
+            },
+        ],
     }
     # Deal 2: Decreasing sentiment, no hedge words
     deal2 = {
@@ -210,8 +210,8 @@ def test_deal_id_alignment(tmp_path):
                     "sender": "bob@enron.com",
                     "recipients": ["charlie@company.com"],
                     "subject": "Hello",
-                    "message_id": "m3"
-                }
+                    "message_id": "m3",
+                },
             },
             {
                 "timestamp": "2025-01-03T10:00:00Z",
@@ -221,10 +221,10 @@ def test_deal_id_alignment(tmp_path):
                     "sender": "charlie@company.com",
                     "recipients": ["bob@enron.com"],
                     "subject": "RE: Hello",
-                    "message_id": "m4"
-                }
-            }
-        ]
+                    "message_id": "m4",
+                },
+            },
+        ],
     }
     # Deal 3: Single email
     deal3 = {
@@ -248,10 +248,10 @@ def test_deal_id_alignment(tmp_path):
                     "sender": "bob@enron.com",
                     "recipients": ["dave@company.com"],
                     "subject": "Status",
-                    "message_id": "m5"
-                }
+                    "message_id": "m5",
+                },
             }
-        ]
+        ],
     }
 
     with open(deals_dir / "1.json", "w") as f:
@@ -338,7 +338,7 @@ def test_deal_id_alignment(tmp_path):
     # We write a mock tabular_features.parquet with matching index
     df_tabular = pd.DataFrame(
         {"touches": [2, 2, 1], "stakeholder_count": [2, 2, 2]},
-        index=pd.Index([1, 2, 3], name="deal_id")
+        index=pd.Index([1, 2, 3], name="deal_id"),
     )
     df_tabular.to_parquet(data_cfg.processed_features_path)
 

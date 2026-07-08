@@ -1,12 +1,12 @@
 # src/features/text_features.py: Extraction of deep learning and NLP text features for deal timelines.
 
-import os
-import re
+import importlib.util
 import json
 import logging
+import os
 import pickle
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+import re
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -18,39 +18,46 @@ from src.ingestion.timeline_builder import DealTimelineModel
 logger = logging.getLogger(__name__)
 
 # --- Optional deep learning package imports ---
-try:
-    import torch
-    HAS_TORCH = True
-except ImportError:
-    HAS_TORCH = False
+HAS_TORCH = importlib.util.find_spec("torch") is not None
+if not HAS_TORCH:
     logger.warning("PyTorch is not installed. Disabling deep learning models.")
 
 HAS_SBERT = False
 if HAS_TORCH:
     try:
         from sentence_transformers import SentenceTransformer
+
         HAS_SBERT = True
     except ImportError:
-        logger.warning("sentence-transformers not installed. Using HashingVectorizer fallback for SBERT.")
+        logger.warning(
+            "sentence-transformers not installed. Using HashingVectorizer fallback for SBERT."
+        )
 
 HAS_BERTOPIC = False
 if HAS_TORCH:
     try:
         from bertopic import BERTopic
+
         HAS_BERTOPIC = True
     except ImportError:
-        logger.warning("bertopic not installed. Using KMeans clustering fallback for BERTopic.")
+        logger.warning(
+            "bertopic not installed. Using KMeans clustering fallback for BERTopic."
+        )
 
 HAS_TRANSFORMERS = False
 if HAS_TORCH:
     try:
         from transformers import pipeline
+
         HAS_TRANSFORMERS = True
     except ImportError:
-        logger.warning("transformers not installed. Using lexicon rule-based fallback for RoBERTa sentiment.")
+        logger.warning(
+            "transformers not installed. Using lexicon rule-based fallback for RoBERTa sentiment."
+        )
 
 
 # --- Pydantic Validation Schema ---
+
 
 class TextFeaturesRow(BaseModel):
     deal_id: int
@@ -87,14 +94,16 @@ def validate_text_features_df(df: pd.DataFrame) -> None:
 
 # --- Fallback Implementations for Python 3.14 / Missing DL Libraries ---
 
+
 class FallbackKMeansTopicModel:
     """A scikit-learn based KMeans topic modeling fallback."""
 
     def __init__(self, n_topics: int = 10):
-        from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.cluster import KMeans
-        self.vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
-        self.kmeans = KMeans(n_clusters=n_topics, random_state=42, n_init='auto')
+        from sklearn.feature_extraction.text import TfidfVectorizer
+
+        self.vectorizer = TfidfVectorizer(stop_words="english", max_features=1000)
+        self.kmeans = KMeans(n_clusters=n_topics, random_state=42, n_init="auto")
         self.n_topics = n_topics
 
     def fit(self, documents: List[str]):
@@ -105,7 +114,10 @@ class FallbackKMeansTopicModel:
         n_docs = len(documents)
         if n_docs < self.n_topics:
             from sklearn.cluster import KMeans
-            self.kmeans = KMeans(n_clusters=max(1, n_docs), random_state=42, n_init='auto')
+
+            self.kmeans = KMeans(
+                n_clusters=max(1, n_docs), random_state=42, n_init="auto"
+            )
         self.kmeans.fit(tfidf)
         return self
 
@@ -127,20 +139,52 @@ def compute_fallback_sbert(text: str) -> np.ndarray:
         A 384-dimensional L2-normalized numpy array.
     """
     from sklearn.feature_extraction.text import HashingVectorizer
-    vectorizer = HashingVectorizer(n_features=384, norm='l2', alternate_sign=True)
+
+    vectorizer = HashingVectorizer(n_features=384, norm="l2", alternate_sign=True)
     dense_vec = vectorizer.transform([text]).toarray()[0]
     return dense_vec
 
 
 # Pre-defined lexicon for sentiment fallback
 POSITIVE_WORDS = {
-    "great", "good", "excellent", "agree", "perfect", "success", "won", "happy", "pleased",
-    "interested", "progress", "forward", "partnership", "thanks", "regards", "best", "deal"
+    "great",
+    "good",
+    "excellent",
+    "agree",
+    "perfect",
+    "success",
+    "won",
+    "happy",
+    "pleased",
+    "interested",
+    "progress",
+    "forward",
+    "partnership",
+    "thanks",
+    "regards",
+    "best",
+    "deal",
 }
 NEGATIVE_WORDS = {
-    "bad", "fail", "lost", "delay", "issue", "concern", "disagree", "reject", "sorry",
-    "unfortunately", "problem", "difficult", "risk", "cancel", "tbd", "hedge", "not sure"
+    "bad",
+    "fail",
+    "lost",
+    "delay",
+    "issue",
+    "concern",
+    "disagree",
+    "reject",
+    "sorry",
+    "unfortunately",
+    "problem",
+    "difficult",
+    "risk",
+    "cancel",
+    "tbd",
+    "hedge",
+    "not sure",
 }
+
 
 def compute_fallback_sentiment(text: str) -> float:
     """Computes lexicon-based sentiment score in [-1.0, 1.0].
@@ -153,7 +197,7 @@ def compute_fallback_sentiment(text: str) -> float:
     """
     if not text:
         return 0.0
-    words = re.findall(r'\b\w+\b', text.lower())
+    words = re.findall(r"\b\w+\b", text.lower())
     pos_count = sum(1 for w in words if w in POSITIVE_WORDS)
     neg_count = sum(1 for w in words if w in NEGATIVE_WORDS)
     total = pos_count + neg_count
@@ -163,6 +207,7 @@ def compute_fallback_sentiment(text: str) -> float:
 
 
 # --- Text Feature Helper Functions ---
+
 
 def load_hedge_words(path: str) -> List[str]:
     """Loads a list of hedge words/phrases from a flat text file.
@@ -205,7 +250,7 @@ def compute_hedge_word_density(text: str, hedge_words: List[str]) -> float:
 
     # Compile pattern for all hedge phrases/words matching word boundaries case-insensitively
     escaped_terms = [re.escape(term) for term in hedge_words]
-    pattern = re.compile(r'\b(' + '|'.join(escaped_terms) + r')\b', re.IGNORECASE)
+    pattern = re.compile(r"\b(" + "|".join(escaped_terms) + r")\b", re.IGNORECASE)
 
     matches = len(pattern.findall(text))
     return min(1.0, matches / total_words)
@@ -264,6 +309,7 @@ def compute_cosine_distance(u: np.ndarray, v: np.ndarray) -> float:
 
 # --- Batched DL / Fallback Feature Extraction ---
 
+
 def extract_sbert_embeddings_batched(
     texts: List[str], model_name: str, batch_size: int
 ) -> np.ndarray:
@@ -281,7 +327,9 @@ def extract_sbert_embeddings_batched(
         return np.empty((0, 384))
 
     if HAS_SBERT:
-        logger.info(f"Computing SBERT embeddings using '{model_name}' (batch_size={batch_size})...")
+        logger.info(
+            f"Computing SBERT embeddings using '{model_name}' (batch_size={batch_size})..."
+        )
         model = SentenceTransformer(model_name)
         embeddings = model.encode(texts, batch_size=batch_size, show_progress_bar=False)
         return np.array(embeddings)
@@ -310,23 +358,25 @@ def extract_roberta_sentiment_batched(
         return []
 
     if HAS_TRANSFORMERS:
-        logger.info(f"Computing RoBERTa sentiment using '{model_name}' (batch_size={batch_size})...")
+        logger.info(
+            f"Computing RoBERTa sentiment using '{model_name}' (batch_size={batch_size})..."
+        )
         classifier = pipeline(
             "sentiment-analysis",
             model=model_name,
             tokenizer=model_name,
             top_k=None,
-            device=-1  # Force CPU for general environment compatibility
+            device=-1,  # Force CPU for general environment compatibility
         )
         scores = []
         # Process batched inputs via pipeline generator/list
         results = classifier(texts, batch_size=batch_size)
         for res in results:
             # res is a list of score dicts: [{'label': 'negative', 'score': ...}, ...]
-            probs = {d['label'].lower(): d['score'] for d in res}
+            probs = {d["label"].lower(): d["score"] for d in res}
             # Handle both name styles (positive/negative vs label_2/label_0)
-            p_pos = probs.get('positive', probs.get('label_2', 0.0))
-            p_neg = probs.get('negative', probs.get('label_0', 0.0))
+            p_pos = probs.get("positive", probs.get("label_2", 0.0))
+            p_neg = probs.get("negative", probs.get("label_0", 0.0))
             scores.append(float(p_pos - p_neg))
         return scores
     else:
@@ -353,7 +403,9 @@ def train_or_load_topic_model(
 
     if HAS_BERTOPIC:
         # Load from disk if it exists
-        if os.path.exists(model_file) or os.path.exists(os.path.join(model_dir, "topics.json")):
+        if os.path.exists(model_file) or os.path.exists(
+            os.path.join(model_dir, "topics.json")
+        ):
             logger.info(f"Loading cached BERTopic model from {model_dir}...")
             try:
                 # Use BERTopic.load or pickle depending on how it was saved
@@ -362,7 +414,9 @@ def train_or_load_topic_model(
                 topics = model.transform(texts, embeddings=embeddings)[0]
                 return model, list(topics)
             except Exception as e:
-                logger.warning(f"Failed to load cached BERTopic model: {e}. Refitting...")
+                logger.warning(
+                    f"Failed to load cached BERTopic model: {e}. Refitting..."
+                )
 
         logger.info(f"Fitting BERTopic model with min_topic_size={min_topic_size}...")
         model = BERTopic(min_topic_size=min_topic_size, calculate_probabilities=False)
@@ -382,7 +436,9 @@ def train_or_load_topic_model(
             topics = model.transform(texts)
             return model, list(topics)
 
-        logger.info(f"Fitting FallbackKMeansTopicModel with n_topics={min_topic_size}...")
+        logger.info(
+            f"Fitting FallbackKMeansTopicModel with n_topics={min_topic_size}..."
+        )
         model = FallbackKMeansTopicModel(n_topics=min_topic_size)
         model.fit(texts)
         topics = model.transform(texts)
@@ -395,6 +451,7 @@ def train_or_load_topic_model(
 
 
 # --- Main Feature Extraction pipeline ---
+
 
 def build_text_features(config: AppConfig) -> pd.DataFrame:
     """Loads deal timelines, extracts Stream A text features, and saves them to parquet.
@@ -429,34 +486,37 @@ def build_text_features(config: AppConfig) -> pd.DataFrame:
 
     # Flat list of messages mapped to deal identifiers
     all_message_texts: List[str] = []
-    message_metadata: List[Dict[str, Any]] = []  # Maps each message index back to deal_id & ordering
+    # Maps each message index back to deal_id & ordering
+    message_metadata: List[Dict[str, Any]] = []
 
     for timeline in deal_timelines:
         emails = [e for e in timeline.events if e.type == "email"]
         for idx, email in enumerate(emails):
             all_message_texts.append(email.content)
-            message_metadata.append({
-                "deal_id": timeline.deal_id,
-                "msg_idx": idx,
-                "timestamp": email.timestamp
-            })
+            message_metadata.append(
+                {
+                    "deal_id": timeline.deal_id,
+                    "msg_idx": idx,
+                    "timestamp": email.timestamp,
+                }
+            )
 
     if not all_message_texts:
-        logger.warning("No email messages found in any deal timeline. Creating empty features DataFrame.")
+        logger.warning(
+            "No email messages found in any deal timeline. Creating empty features DataFrame."
+        )
         return pd.DataFrame()
 
     # Step 2: Compute Batched SBERT Embeddings (Stream A-1)
     embeddings = extract_sbert_embeddings_batched(
-        all_message_texts,
-        features_config.sbert_model_name,
-        features_config.batch_size
+        all_message_texts, features_config.sbert_model_name, features_config.batch_size
     )
 
     # Step 3: Compute Batched Sentiment Scores (Stream A-3)
     sentiment_scores = extract_roberta_sentiment_batched(
         all_message_texts,
         features_config.roberta_sentiment_model_name,
-        features_config.batch_size
+        features_config.batch_size,
     )
 
     # Step 4: Fit/Transform Topic Modeling (Stream A-2)
@@ -464,7 +524,7 @@ def build_text_features(config: AppConfig) -> pd.DataFrame:
         all_message_texts,
         embeddings,
         features_config.bertopic_model_dir,
-        features_config.bertopic_min_topic_size
+        features_config.bertopic_min_topic_size,
     )
 
     # Step 5: Load hedge words
@@ -494,15 +554,17 @@ def build_text_features(config: AppConfig) -> pd.DataFrame:
 
         if deal_msgs.empty:
             # Handle deal with 0 email messages
-            feature_rows.append({
-                "deal_id": deal_id,
-                "sbert_embedding": [0.0] * 384,
-                "dominant_topic_id": -1,
-                "topic_drift_score": 0.0,
-                "sentiment_mean": 0.0,
-                "sentiment_slope": 0.0,
-                "hedge_word_density": 0.0,
-            })
+            feature_rows.append(
+                {
+                    "deal_id": deal_id,
+                    "sbert_embedding": [0.0] * 384,
+                    "dominant_topic_id": -1,
+                    "topic_drift_score": 0.0,
+                    "sentiment_mean": 0.0,
+                    "sentiment_slope": 0.0,
+                    "hedge_word_density": 0.0,
+                }
+            )
             continue
 
         # A-1. SBERT embeddings: mean-pooling across all messages in timeline
@@ -548,15 +610,17 @@ def build_text_features(config: AppConfig) -> pd.DataFrame:
         combined_text = "\n".join(deal_msgs["text"].values)
         hedge_word_density = compute_hedge_word_density(combined_text, hedge_words)
 
-        feature_rows.append({
-            "deal_id": deal_id,
-            "sbert_embedding": sbert_embedding,
-            "dominant_topic_id": dominant_topic_id,
-            "topic_drift_score": topic_drift_score,
-            "sentiment_mean": sentiment_mean,
-            "sentiment_slope": sentiment_slope,
-            "hedge_word_density": hedge_word_density,
-        })
+        feature_rows.append(
+            {
+                "deal_id": deal_id,
+                "sbert_embedding": sbert_embedding,
+                "dominant_topic_id": dominant_topic_id,
+                "topic_drift_score": topic_drift_score,
+                "sentiment_mean": sentiment_mean,
+                "sentiment_slope": sentiment_slope,
+                "hedge_word_density": hedge_word_density,
+            }
+        )
 
     # Step 7: Build output DataFrame
     df = pd.DataFrame(feature_rows)
