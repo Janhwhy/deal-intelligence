@@ -8,7 +8,6 @@ from src.ingestion.deal_linker import (
     load_deal_relevance_keywords,
 )
 
-
 # ---------------------------------------------------------------------------
 # Tests for is_external_email
 # ---------------------------------------------------------------------------
@@ -26,7 +25,10 @@ def test_is_external_email_same_domain():
 
 def test_is_external_email_mixed_recipients():
     """Email with one internal and one external recipient should be external."""
-    assert is_external_email("alice@enron.com", ["bob@enron.com", "carol@buyer.com"]) is True
+    assert (
+        is_external_email("alice@enron.com", ["bob@enron.com", "carol@buyer.com"])
+        is True
+    )
 
 
 def test_is_external_email_no_at_sign_sender():
@@ -63,13 +65,19 @@ def test_is_deal_relevant_keyword_in_subject(deal_keywords):
 
 def test_is_deal_relevant_keyword_in_body(deal_keywords):
     """Email with keyword in body should be deal-relevant."""
-    email = {"subject": "Follow Up", "content": "Please review the attached contract details."}
+    email = {
+        "subject": "Follow Up",
+        "content": "Please review the attached contract details.",
+    }
     assert is_deal_relevant(email, deal_keywords) is True
 
 
 def test_is_deal_relevant_no_keyword(deal_keywords):
     """Email with no keyword in subject or body should NOT be deal-relevant."""
-    email = {"subject": "Team lunch today", "content": "Let's meet at noon. See you there!"}
+    email = {
+        "subject": "Team lunch today",
+        "content": "Let's meet at noon. See you there!",
+    }
     assert is_deal_relevant(email, deal_keywords) is False
 
 
