@@ -94,6 +94,11 @@ def generate_temp_synthetic_timelines(output_dir: str, num_deals: int = 30) -> N
             "stage": "Closed Won" if outcome == "won" else "Closed Lost",
             "outcome": outcome,
             "close_date": "2026-07-08T12:00:00Z",
+            "industry": "SaaS",
+            "annual_revenue": 1000000.0,
+            "num_employees": 50,
+            "country": "USA",
+            "contacts": [],
             "events": events,
         }
 
