@@ -97,6 +97,24 @@ poetry run python scripts/download_data.py
 
 ---
 
+## Data Ingestion & Features Pipeline
+
+To run the ingestion pipeline to parse Enron emails, link pseudo-deals with CRM metadata, and save timeline JSONs:
+```bash
+poetry run python src/ingestion/pipeline.py
+```
+
+### Fast Debugging (Max Deals Limit)
+For faster iterations on a subset of the dataset, you can limit the pipeline to process only the first $N$ deals:
+* **Via command-line option:**
+  ```bash
+  poetry run python src/ingestion/pipeline.py --max-deals 10
+  ```
+* **Via configuration file (`configs/data.yaml`):**
+  Set `max_deals_debug: 10`
+
+---
+
 ## Known Limitation: Deal-Linking
 > [!IMPORTANT]
 > **Enron emails and HubSpot Kaggle CRM data are not natively linked by deal_id.**

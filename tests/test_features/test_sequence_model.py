@@ -50,7 +50,10 @@ def test_padding_leakage():
     from src.features.sequence_model import LSTMSequenceEncoder
 
     torch.manual_seed(42)
-    encoder = LSTMSequenceEncoder(input_size=384, hidden_size=128, num_layers=1)
+    # use_attention=False so final hidden state is deterministic under padding
+    encoder = LSTMSequenceEncoder(
+        input_size=384, hidden_size=128, num_layers=1, use_attention=False
+    )
     encoder.eval()
 
     # Sequence A: length 2
@@ -87,11 +90,15 @@ def test_lstm_determinism():
 
     # Set seed and create first encoder
     torch.manual_seed(123)
-    encoder1 = LSTMSequenceEncoder(input_size=384, hidden_size=128, num_layers=1)
+    encoder1 = LSTMSequenceEncoder(
+        input_size=384, hidden_size=128, num_layers=1, use_attention=False
+    )
 
     # Set seed and create second encoder
     torch.manual_seed(123)
-    encoder2 = LSTMSequenceEncoder(input_size=384, hidden_size=128, num_layers=1)
+    encoder2 = LSTMSequenceEncoder(
+        input_size=384, hidden_size=128, num_layers=1, use_attention=False
+    )
 
     x = torch.randn(2, 3, 384)
     lengths = torch.tensor([3, 2], dtype=torch.long)
@@ -157,13 +164,14 @@ def test_single_message_deal(tmp_path):
     item = dataset[0]
     assert item["deal_id"] == 99
     assert item["seq_len"] == 1
-    assert item["embeddings"].shape == (1, 384)
+    # Embeddings are now 386-dim: SBERT 384 + 2 temporal features
+    assert item["embeddings"].shape == (1, 386)
 
     # Wrap in dataloader
     loader = DataLoader([item], batch_size=1, collate_fn=collate_padded_sequences)
     batch = next(iter(loader))
 
-    assert batch["embeddings"].shape == (1, 1, 384)
+    assert batch["embeddings"].shape == (1, 1, 386)
     assert batch["lengths"].tolist() == [1]
     assert batch["deal_ids"].tolist() == [99]
     assert batch["outcomes"].tolist() == [1.0]

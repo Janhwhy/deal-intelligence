@@ -33,14 +33,31 @@ def run_ingestion_pipeline() -> None:
     """
     logger.info("Initializing ingestion pipeline...")
 
-    # Load configurations, optionally from CLI argument
-    config_dir = sys.argv[1] if len(sys.argv) > 1 else None
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Ingestion pipeline CLI")
+    parser.add_argument(
+        "config_dir", nargs="?", default=None, help="Directory containing config files"
+    )
+    parser.add_argument(
+        "--max-deals",
+        type=int,
+        default=None,
+        help="Limit processing to the first N deals",
+    )
+    args = parser.parse_args()
+
+    config_dir = args.config_dir
     try:
         config = load_config(config_dir=config_dir)
         data_cfg = config.data
     except Exception as e:
         logger.error(f"Failed to load configurations: {e}")
         sys.exit(1)
+
+    # Override config key with CLI argument if provided
+    if args.max_deals is not None:
+        data_cfg.max_deals_debug = args.max_deals
 
     logger.info(f"Loaded configuration. Enron path: {data_cfg.enron_raw_dir}")
 
@@ -50,7 +67,11 @@ def run_ingestion_pipeline() -> None:
         sys.exit(1)
 
     logger.info("Parsing raw Enron emails...")
-    emails = list(crawl_enron_emails(data_cfg.enron_raw_dir))
+    emails = list(
+        crawl_enron_emails(
+            data_cfg.enron_raw_dir, max_deals_debug=data_cfg.max_deals_debug
+        )
+    )
     if not emails:
         logger.warning("No emails parsed. Exiting pipeline.")
         sys.exit(0)
@@ -69,6 +90,14 @@ def run_ingestion_pipeline() -> None:
     logger.info("Building and saving deal timeline JSONs...")
     save_count = 0
     for deal_data in deals:
+        if (
+            data_cfg.max_deals_debug is not None
+            and save_count >= data_cfg.max_deals_debug
+        ):
+            logger.info(
+                f"Reached max_deals_debug limit of {data_cfg.max_deals_debug}. Stopping timeline creation."
+            )
+            break
         try:
             timeline = build_deal_timeline(deal_data)
             save_deal_timeline(timeline, data_cfg.processed_deals_dir)

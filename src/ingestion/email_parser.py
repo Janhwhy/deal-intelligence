@@ -200,11 +200,14 @@ def parse_email_file(file_path: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def crawl_enron_emails(enron_raw_dir: str) -> Generator[Dict[str, Any], None, None]:
+def crawl_enron_emails(
+    enron_raw_dir: str, max_deals_debug: Optional[int] = None
+) -> Generator[Dict[str, Any], None, None]:
     """Recursively walks the raw Enron directory and yields parsed email records.
 
     Args:
         enron_raw_dir: Root directory of raw Enron data.
+        max_deals_debug: Optional limit on deal processing for fast debugging.
 
     Yields:
         Parsed email dictionaries.
@@ -215,15 +218,26 @@ def crawl_enron_emails(enron_raw_dir: str) -> Generator[Dict[str, Any], None, No
         target_dir = maildir_path
 
     logger.info(f"Crawling Enron emails in: {target_dir}")
-    count = 0
+
+    file_paths = []
     for root, _, files in os.walk(target_dir):
         for file in files:
             # Enron mail files are typically numbers or strings, avoid hidden files
             if file.startswith("."):
                 continue
+            file_paths.append(os.path.join(root, file))
 
-            file_path = os.path.join(root, file)
-            parsed = parse_email_file(file_path)
+    if max_deals_debug is not None:
+        # Limit the number of parsed files to inspect to speed up execution
+        limit = max(1000, max_deals_debug * 100)
+        logger.info(f"Debug Mode: Limiting crawled email files to first {limit}")
+        file_paths = file_paths[:limit]
+
+    from concurrent.futures import ThreadPoolExecutor
+
+    count = 0
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        for parsed in executor.map(parse_email_file, file_paths):
             if parsed:
                 count += 1
                 yield parsed

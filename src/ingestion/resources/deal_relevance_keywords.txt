@@ -1,0 +1,104 @@
+# deal_relevance_keywords.txt
+# One keyword or phrase per line (case-insensitive matching).
+# Edit this file to tune which Enron emails are considered "deal-relevant"
+# before clustering into pseudo-deal timelines.
+#
+# DESIGN PRINCIPLE:
+#   - Single words: only use if they are unambiguously sales/deal-specific
+#     and extremely unlikely to appear in IT tickets, HR email, or newsletters.
+#   - Multi-word phrases: use for terms that are common in non-sales contexts
+#     (e.g. "contract" appears in IT service tickets, so use "contract draft"
+#     or "contract review" instead).
+#
+# ── Unambiguously sales-specific single words ─────────────────────────────
+proposal
+proposals
+rfp
+rfq
+quotation
+pricing
+bid
+tender
+vendor
+invoice
+invoicing
+nda
+
+# ── Sales opportunity phrases ──────────────────────────────────────────────
+price proposal
+business proposal
+formal quote
+formal proposal
+pricing proposal
+price list
+bid submission
+tender submission
+tender response
+offering memorandum
+request for proposal
+request for quotation
+purchase order
+purchase agreement
+sales order
+vendor selection
+vendor evaluation
+
+# ── Contract & legal (multi-word to avoid IT/HR false positives) ──────────
+contract draft
+contract review
+contract terms
+contract negotiation
+sales contract
+service contract
+master agreement
+master services agreement
+non-disclosure agreement
+nda agreement
+statement of work
+scope of work
+letter of intent
+term sheet
+engagement letter
+addendum to contract
+contract amendment
+contract execution
+contract signing
+contract renewal
+
+# ── Commercial negotiation ─────────────────────────────────────────────────
+negotiation
+counter proposal
+final offer
+commercial terms
+payment terms
+credit terms
+volume discount
+discounted pricing
+
+# ── Project & delivery ─────────────────────────────────────────────────────
+project budget
+project milestone
+delivery schedule
+implementation plan
+go-live date
+project kickoff
+
+# ── Evaluation & decision ──────────────────────────────────────────────────
+proof of concept
+poc agreement
+pilot program
+pilot agreement
+product demonstration
+due diligence
+final approval
+contract signature
+
+# ── Relationship / closing ─────────────────────────────────────────────────
+deal closure
+deal closing
+account renewal
+service level agreement
+enterprise agreement
+strategic partnership
+preferred vendor
+preferred supplier

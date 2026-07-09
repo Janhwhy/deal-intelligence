@@ -4,10 +4,12 @@ import json
 import logging
 import os
 import random
+from typing import List
 
 import numpy as np
 
 from src.config import load_config
+from src.features.sequence_dataset import EMBEDDING_DIM
 from src.features.sequence_model import HAS_TORCH
 
 # Configure logging
@@ -17,99 +19,117 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def generate_temp_synthetic_timelines(output_dir: str, num_deals: int = 30) -> None:
-    """Generates small synthetic deal timelines for diagnostic validation when raw data is not run.
+def print_deal_examples(deals_dir: str, deal_files: List[str]) -> None:
+    """Sanity prints 5 example won and 5 example lost deal timelines."""
+    won_examples = []
+    lost_examples = []
 
-    Each timeline contains a sequence of email events with content of variable length
-    and a random outcome label ("won" or "lost").
-    """
-    os.makedirs(output_dir, exist_ok=True)
-    logger.info(
-        f"Generating {num_deals} temporary synthetic deal timelines in '{output_dir}' for validation..."
-    )
+    for filename in sorted(deal_files):
+        filepath = os.path.join(deals_dir, filename)
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        outcome = data.get("outcome")
+        emails = [e for e in data.get("events", []) if e.get("type") == "email"]
+        msg_count = len(emails)
+        snippet = "No communication."
+        if msg_count > 0:
+            snippet = emails[0].get("content", "")[:100].replace("\n", " ") + "..."
 
-    vocab_positive = [
-        "great",
-        "deal",
-        "pricing",
-        "contract",
-        "agree",
-        "perfect",
-        "partnership",
-        "finalize",
-    ]
-    vocab_negative = [
-        "delay",
-        "busy",
-        "expensive",
-        "budget",
-        "no",
-        "reconsider",
-        "quiet",
-        "issue",
-    ]
-
-    random.seed(42)
-
-    for deal_id in range(1, num_deals + 1):
-        outcome = "won" if random.random() > 0.5 else "lost"
-        num_emails = random.randint(2, 8)
-
-        events = []
-        # Generate sequential message events
-        for idx in range(num_emails):
-            # If deal is won, make messages trend more positive. If lost, trend negative/quiet.
-            if outcome == "won":
-                words = random.sample(vocab_positive, 3) + ["we", "are", "ready"]
-            else:
-                words = random.sample(vocab_negative, 3) + ["not", "sure", "difficult"]
-
-            content = " ".join(words)
-
-            events.append(
-                {
-                    "type": "email",
-                    "timestamp": f"2026-07-08T10:{idx:02d}:00Z",
-                    "metadata": {
-                        "message_id": f"<msg-{deal_id}-{idx}@enron.com>",
-                        "sender": (
-                            "sender@enron.com" if idx % 2 == 0 else "buyer@external.com"
-                        ),
-                        "recipients": (
-                            ["buyer@external.com"]
-                            if idx % 2 == 0
-                            else ["sender@enron.com"]
-                        ),
-                        "subject": f"Deal discussion {deal_id}",
-                    },
-                    "content": content,
-                }
-            )
-
-        timeline_data = {
-            "deal_id": deal_id,
-            "company_id": deal_id * 10,
-            "company_name": f"Synthetic Corp {deal_id}",
-            "amount": float(random.randint(10000, 100000)),
-            "stage": "Closed Won" if outcome == "won" else "Closed Lost",
-            "outcome": outcome,
-            "close_date": "2026-07-08T12:00:00Z",
-            "industry": "SaaS",
-            "annual_revenue": 1000000.0,
-            "num_employees": 50,
-            "country": "USA",
-            "contacts": [],
-            "events": events,
+        example_info = {
+            "deal_id": data.get("deal_id"),
+            "msg_count": msg_count,
+            "snippet": snippet,
         }
 
-        with open(
-            os.path.join(output_dir, f"{deal_id}.json"), "w", encoding="utf-8"
-        ) as f:
-            json.dump(timeline_data, f, indent=2)
+        if outcome == "won":
+            if len(won_examples) < 5:
+                won_examples.append(example_info)
+        else:
+            if len(lost_examples) < 5:
+                lost_examples.append(example_info)
+
+        if len(won_examples) >= 5 and len(lost_examples) >= 5:
+            break
+
+    logger.info("=== Example 'Won' Deal Timelines ===")
+    for ex in won_examples:
+        logger.info(
+            f"Deal ID: {ex['deal_id']} | Messages: {ex['msg_count']} | Snippet: {ex['snippet']}"
+        )
+
+    logger.info("=== Example 'Lost' Deal Timelines ===")
+    for ex in lost_examples:
+        logger.info(
+            f"Deal ID: {ex['deal_id']} | Messages: {ex['msg_count']} | Snippet: {ex['snippet']}"
+        )
+
+
+def _train_one_epoch(model, train_loader, optimizer, criterion, device, train_size):
+    """Runs one training epoch and returns average weighted loss."""
+    import torch
+
+    model.train()
+    total_loss = 0.0
+    for batch in train_loader:
+        optimizer.zero_grad()
+        embeddings = batch["embeddings"].to(device)
+        lengths = batch["lengths"].to(device)
+        outcomes = batch["outcomes"].to(device)
+        logits = model(embeddings, lengths).squeeze(-1)
+        loss = criterion(logits, outcomes)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        optimizer.step()
+        total_loss += loss.item() * len(outcomes)
+    return total_loss / train_size if train_size > 0 else 0.0
+
+
+def _evaluate(model, loader, criterion, device, dataset_size):
+    """Runs evaluation and returns (avg_loss, predictions, labels)."""
+    import torch
+
+    model.eval()
+    total_loss = 0.0
+    all_preds = []
+    all_labels = []
+    with torch.no_grad():
+        for batch in loader:
+            embeddings = batch["embeddings"].to(device)
+            lengths = batch["lengths"].to(device)
+            outcomes = batch["outcomes"].to(device)
+            logits = model(embeddings, lengths).squeeze(-1)
+            loss = criterion(logits, outcomes)
+            total_loss += loss.item() * len(outcomes)
+            preds = torch.sigmoid(logits)
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(outcomes.cpu().numpy())
+    avg_loss = total_loss / dataset_size if dataset_size > 0 else 0.0
+    return avg_loss, np.array(all_preds), np.array(all_labels)
+
+
+def _count_won_lost(deals_dir: str, filenames: List[str]):
+    """Counts won and lost outcomes in a list of deal JSON files.
+
+    Returns:
+        Tuple of (won_count, lost_count).
+    """
+    won = 0
+    lost = 0
+    for filename in filenames:
+        filepath = os.path.join(deals_dir, filename)
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if data.get("outcome") == "won":
+            won += 1
+        else:
+            lost += 1
+    return won, lost
 
 
 def run_diagnostic_validation() -> None:
-    """Loads dataset, trains a tiny linear probe on LSTM outputs, and validates classification signal."""
+    """Loads actual dataset timelines, trains a tiny linear probe on LSTM outputs,
+    and validates classification signal.
+    """
     logger.info("Initializing Stream C standalone validation...")
 
     if not HAS_TORCH:
@@ -123,13 +143,14 @@ def run_diagnostic_validation() -> None:
     import torch
     import torch.nn as nn
     from sklearn.metrics import roc_auc_score
-    from torch.utils.data import DataLoader, random_split
+    from torch.utils.data import DataLoader
 
     from src.features.sequence_dataset import (
         DealSequenceDataset,
         collate_padded_sequences,
     )
     from src.features.sequence_model import LSTMSequenceEncoder
+    from src.features.text_features import HAS_SBERT
 
     # Load configuration
     cfg = load_config()
@@ -143,129 +164,242 @@ def run_diagnostic_validation() -> None:
 
     # Check for existing processed deals directory
     deals_dir = cfg.data.processed_deals_dir
-    is_temp_data = False
 
-    if (
-        not os.path.exists(deals_dir)
-        or len([f for f in os.listdir(deals_dir) if f.endswith(".json")]) < 5
-    ):
-        # Create temporary directory for validation
-        deals_dir = "data/processed/deals_validation_temp"
-        generate_temp_synthetic_timelines(deals_dir, num_deals=40)
-        is_temp_data = True
-
-    try:
-        # Load Dataset
-        dataset = DealSequenceDataset(
-            deals_dir=deals_dir,
-            sbert_model_name=features_cfg.sbert_model_name,
-            batch_size=features_cfg.batch_size,
+    if not os.path.exists(deals_dir):
+        raise FileNotFoundError(
+            f"No processed deals directory found at '{deals_dir}'. "
+            "Please run the ingestion pipeline (poetry run python src/ingestion/pipeline.py) first."
         )
 
-        logger.info(f"Loaded dataset with {len(dataset)} deal sequences.")
+    deal_files = sorted([f for f in os.listdir(deals_dir) if f.endswith(".json")])
+    num_deals = len(deal_files)
 
-        # Split Train/Val (70/30)
-        train_len = int(0.7 * len(dataset))
-        val_len = len(dataset) - train_len
-        train_set, val_set = random_split(
-            dataset,
-            [train_len, val_len],
-            generator=torch.Generator().manual_seed(model_cfg.lstm_seed),
+    if num_deals == 0:
+        raise FileNotFoundError(
+            f"No real deal timeline JSON files found in '{deals_dir}'. "
+            "Please run the ingestion pipeline first."
         )
 
-        logger.info(f"Split sizes: Train={train_len}, Validation={val_len}")
+    logger.info(f"Loaded {num_deals} real deal timeline files from '{deals_dir}'.")
 
-        train_loader = DataLoader(
-            train_set, batch_size=8, shuffle=True, collate_fn=collate_padded_sequences
-        )
-        val_loader = DataLoader(
-            val_set, batch_size=8, shuffle=False, collate_fn=collate_padded_sequences
-        )
+    # Print example deal timelines
+    print_deal_examples(deals_dir, deal_files)
 
-        # Define Linear Probe model
-        class LinearProbeModel(nn.Module):
-            def __init__(self, hidden_size: int, dropout: float):
-                super().__init__()
-                self.encoder = LSTMSequenceEncoder(
-                    input_size=384,
-                    hidden_size=hidden_size,
-                    num_layers=1,
-                    dropout=dropout,
-                )
-                self.fc = nn.Linear(hidden_size, 1)
-                self.sigmoid = nn.Sigmoid()
+    # Explicitly print the SBERT embedding source used
+    embedding_source = (
+        f"Real SBERT model ('{features_cfg.sbert_model_name}')"
+        if HAS_SBERT
+        else "Fallback HashingVectorizer"
+    )
+    logger.info(f"Embedding Source Used: {embedding_source}")
+    logger.info(
+        f"Input Dimensionality: {EMBEDDING_DIM} "
+        f"(SBERT 384 + 3 temporal features: time_delta, is_external_sender, content_length)"
+    )
 
-            def forward(self, x: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
-                trajectory = self.encoder(x, lengths)
-                logits = self.fc(trajectory)
-                return self.sigmoid(logits)
-
-        model = LinearProbeModel(
-            hidden_size=model_cfg.lstm_hidden_size, dropout=model_cfg.lstm_dropout
+    # Enforce sample size warning
+    if num_deals < 100:
+        logger.warning(
+            f"WARNING: The sample size ({num_deals} deals) is too small (< 100) for a statistically meaningful signal check."
         )
 
-        criterion = nn.BCELoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    # Shuffle files to partition by deal_id BEFORE loading to prevent leakage
+    shuffled_files = list(deal_files)
+    random.shuffle(shuffled_files)
 
-        # Train diagnostic probe
-        logger.info("Training throwaway linear probe...")
-        model.train()
-        for epoch in range(1, 11):
-            total_loss = 0.0
-            for batch in train_loader:
-                optimizer.zero_grad()
-                preds = model(batch["embeddings"], batch["lengths"]).squeeze(-1)
-                loss = criterion(preds, batch["outcomes"])
-                loss.backward()
-                optimizer.step()
-                total_loss += loss.item() * len(batch["outcomes"])
-            avg_loss = total_loss / len(train_set)
-            logger.info(f"Epoch {epoch}/10 - Loss: {avg_loss:.4f}")
+    train_len = int(0.7 * len(shuffled_files))
+    train_files = shuffled_files[:train_len]
+    val_files = shuffled_files[train_len:]
 
-        # Evaluate on validation split
-        model.eval()
-        all_preds = []
-        all_labels = []
+    # Count classes in train and validation sets
+    train_won, train_lost = _count_won_lost(deals_dir, train_files)
+    val_won, val_lost = _count_won_lost(deals_dir, val_files)
 
-        with torch.no_grad():
-            for batch in val_loader:
-                preds = model(batch["embeddings"], batch["lengths"]).squeeze(-1)
-                all_preds.extend(preds.cpu().numpy())
-                all_labels.extend(batch["outcomes"].cpu().numpy())
+    logger.info(
+        f"Split sizes (leakage-free by deal_id): Train={len(train_files)}, Validation={len(val_files)}"
+    )
+    logger.info(f"Train Split Class Counts: {train_won} Won, {train_lost} Lost")
+    logger.info(f"Validation Split Class Counts: {val_won} Won, {val_lost} Lost")
 
-        all_preds = np.array(all_preds)
-        all_labels = np.array(all_labels)
+    # Load pre-split Train/Val datasets
+    train_set = DealSequenceDataset(
+        deals_dir=deals_dir,
+        sbert_model_name=features_cfg.sbert_model_name,
+        batch_size=features_cfg.batch_size,
+        deal_files=train_files,
+    )
+    val_set = DealSequenceDataset(
+        deals_dir=deals_dir,
+        sbert_model_name=features_cfg.sbert_model_name,
+        batch_size=features_cfg.batch_size,
+        deal_files=val_files,
+    )
 
-        # Metrics
-        binary_preds = (all_preds > 0.5).astype(float)
-        accuracy = np.mean(binary_preds == all_labels)
+    batch_size = min(8, len(train_set)) if len(train_set) > 0 else 1
+    val_batch_size = min(8, len(val_set)) if len(val_set) > 0 else 1
 
-        # Avoid roc_auc_score crash if only 1 class is present in validation subset
-        if len(np.unique(all_labels)) > 1:
-            auc = roc_auc_score(all_labels, all_preds)
+    train_loader = DataLoader(
+        train_set,
+        batch_size=batch_size,
+        shuffle=True,
+        collate_fn=collate_padded_sequences,
+    )
+    val_loader = DataLoader(
+        val_set,
+        batch_size=val_batch_size,
+        shuffle=False,
+        collate_fn=collate_padded_sequences,
+    )
+
+    # Define probe model: LSTM (with attention) + linear head
+    # Uses EMBEDDING_DIM (387) — SBERT 384 + 3 temporal features
+    class LinearProbeModel(nn.Module):
+        def __init__(self, input_size: int, hidden_size: int, dropout: float):
+            super().__init__()
+            self.encoder = LSTMSequenceEncoder(
+                input_size=input_size,
+                hidden_size=hidden_size,
+                num_layers=1,
+                dropout=dropout,
+                use_attention=True,
+            )
+            self.fc = nn.Linear(hidden_size, 1)
+
+        def forward(self, x: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
+            trajectory = self.encoder(x, lengths)
+            logits = self.fc(trajectory)
+            return logits
+
+    model = LinearProbeModel(
+        input_size=EMBEDDING_DIM,
+        hidden_size=model_cfg.lstm_hidden_size,
+        dropout=model_cfg.lstm_dropout,
+    )
+
+    # Device allocation
+    if torch.backends.mps.is_available():
+        device_name = "mps"
+    elif torch.cuda.is_available():
+        device_name = "cuda"
+    else:
+        device_name = "cpu"
+    device = torch.device(device_name)
+    logger.info(f"Using device for training: {device}")
+    model = model.to(device)
+
+    # Confirm parameter optimization status
+    lstm_trainable = any(p.requires_grad for p in model.encoder.parameters())
+    fc_trainable = any(p.requires_grad for p in model.fc.parameters())
+    logger.info(
+        f"Optimization Status: LSTM weights trainable = {lstm_trainable} | "
+        f"Linear head weights trainable = {fc_trainable} | "
+        f"Attention pooling = {model.encoder.use_attention}"
+    )
+    logger.info(
+        "CONFIRMATION: LSTM Encoder (with attention) + Linear head trained jointly end-to-end."
+    )
+
+    # Class weighting: inverse frequency for imbalanced setting
+    pos_weight_val = train_lost / train_won if train_won > 0 else 1.0
+    pos_weight = torch.tensor([pos_weight_val], dtype=torch.float32, device=device)
+    logger.info(f"BCE Class Weighting (pos_weight): {pos_weight_val:.4f}")
+
+    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=30, eta_min=1e-5
+    )
+
+    # ── Early stopping setup ──────────────────────────────────────────────────
+    MAX_EPOCHS = 30
+    PATIENCE = 5
+    best_val_loss = float("inf")
+    epochs_without_improvement = 0
+    best_model_state = None
+
+    logger.info(
+        f"Training LSTM probe (max {MAX_EPOCHS} epochs, early stopping patience={PATIENCE})..."
+    )
+
+    for epoch in range(1, MAX_EPOCHS + 1):
+        avg_train_loss = _train_one_epoch(
+            model, train_loader, optimizer, criterion, device, len(train_set)
+        )
+        avg_val_loss, _, _ = _evaluate(
+            model, val_loader, criterion, device, len(val_set)
+        )
+        scheduler.step()
+
+        logger.info(
+            f"Epoch {epoch:02d}/{MAX_EPOCHS} — Train Loss: {avg_train_loss:.4f} | "
+            f"Val Loss: {avg_val_loss:.4f}"
+        )
+
+        if avg_val_loss < best_val_loss - 1e-4:
+            best_val_loss = avg_val_loss
+            epochs_without_improvement = 0
+            import copy
+
+            best_model_state = copy.deepcopy(model.state_dict())
         else:
-            auc = 0.5  # default/chance
+            epochs_without_improvement += 1
+            if epochs_without_improvement >= PATIENCE:
+                logger.info(
+                    f"Early stopping triggered after {epoch} epochs "
+                    f"(no improvement for {PATIENCE} consecutive epochs)."
+                )
+                break
 
-        logger.info("=== Validation Signal Check Results ===")
-        logger.info(f"Validation Accuracy: {accuracy:.4f}")
-        logger.info(f"Validation AUC:      {auc:.4f}")
+    if best_model_state is not None:
+        model.load_state_dict(best_model_state)
+        logger.info("Restored best model weights for final evaluation.")
 
-        if accuracy > 0.55 or auc > 0.55:
+    # ── Final evaluation ──────────────────────────────────────────────────────
+    _, all_preds, all_labels = _evaluate(
+        model, val_loader, criterion, device, len(val_set)
+    )
+
+    # Metrics
+    binary_preds = (all_preds > 0.5).astype(float)
+    accuracy = np.mean(binary_preds == all_labels) if len(all_labels) > 0 else 0.0
+
+    val_total = len(all_labels)
+    val_baseline_accuracy = max(val_won, val_lost) / val_total if val_total > 0 else 0.0
+
+    if len(np.unique(all_labels)) > 1:
+        auc = roc_auc_score(all_labels, all_preds)
+    else:
+        auc = 0.5
+
+    logger.info("=== Validation Signal Check Results ===")
+    logger.info(f"Validation Accuracy: {accuracy:.4f}")
+    logger.info(
+        f"Validation Majority-Class Baseline Accuracy: {val_baseline_accuracy:.4f}"
+    )
+    logger.info(f"Validation AUC:      {auc:.4f}")
+
+    if accuracy > 0.95 or auc > 0.95:
+        logger.warning(
+            "WARNING: Validation metrics are suspiciously high (Accuracy > 95% or AUC > 95%). "
+            "This may indicate data leakage or trivial separability."
+        )
+    elif auc > 0.55:
+        logger.info(
+            f"RESULT: Stream C shows predictive signal! AUC ({auc:.4f}) is above chance (0.50)."
+        )
+        if accuracy > val_baseline_accuracy:
             logger.info(
-                "RESULT: Stream C shows predictive signal ABOVE chance! Trajectory encoding is successful."
+                f"Success: Accuracy ({accuracy:.4f}) is also above the majority-class baseline ({val_baseline_accuracy:.4f})."
             )
         else:
             logger.warning(
-                "RESULT: Stream C signal is close to chance (0.50). This suggests untrained/small data limits representation quality."
+                f"Note: Although AUC shows signal, Accuracy ({accuracy:.4f}) is at or below "
+                f"the majority-class baseline ({val_baseline_accuracy:.4f})."
             )
-
-    finally:
-        # Clean up temporary synthetic deal files if created
-        if is_temp_data and os.path.exists(deals_dir):
-            logger.info(f"Cleaning up temporary synthetic files in '{deals_dir}'...")
-            for f in os.listdir(deals_dir):
-                os.remove(os.path.join(deals_dir, f))
-            os.rmdir(deals_dir)
+    else:
+        logger.warning(
+            f"RESULT: Stream C shows NO usable signal. AUC ({auc:.4f}) is at or below chance (0.50)."
+        )
 
 
 if __name__ == "__main__":

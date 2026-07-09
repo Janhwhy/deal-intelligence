@@ -241,3 +241,18 @@ def build_tabular_features(
         logger.warning("Empty features dataframe computed.")
 
     return df
+
+
+if __name__ == "__main__":
+    import argparse
+
+    from src.config import load_config
+
+    parser = argparse.ArgumentParser(description="Build tabular features pipeline CLI")
+    parser.add_argument(
+        "config_dir", nargs="?", default=None, help="Directory containing config files"
+    )
+    args = parser.parse_args()
+
+    cfg = load_config(config_dir=args.config_dir)
+    build_tabular_features(cfg.data)

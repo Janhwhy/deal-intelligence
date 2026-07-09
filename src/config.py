@@ -2,6 +2,7 @@
 
 import os
 from dataclasses import dataclass
+from typing import Optional
 
 from omegaconf import OmegaConf
 
@@ -17,6 +18,10 @@ class DataConfig:
     time_proximity_window_days: int
     processed_deals_dir: str
     processed_features_path: str
+    deal_relevance_keywords_path: str = (
+        "src/ingestion/resources/deal_relevance_keywords.txt"
+    )
+    max_deals_debug: Optional[int] = None
 
 
 @dataclass

@@ -105,6 +105,7 @@ def mock_app_config(mock_data_dir):
         time_proximity_window_days=7,
         processed_deals_dir=str(processed_deals_dir),
         processed_features_path=str(processed_features_path),
+        deal_relevance_keywords_path="src/ingestion/resources/deal_relevance_keywords.txt",
     )
 
     features_cfg = FeaturesConfig(

@@ -313,6 +313,10 @@ def compute_cosine_distance(u: np.ndarray, v: np.ndarray) -> float:
 # --- Batched DL / Fallback Feature Extraction ---
 
 
+# Global model cache to prevent reloading SBERT/RoBERTa models multiple times per process execution
+_MODEL_CACHE: Dict[str, Any] = {}
+
+
 def extract_sbert_embeddings_batched(
     texts: List[str], model_name: str, batch_size: int
 ) -> np.ndarray:
@@ -330,10 +334,15 @@ def extract_sbert_embeddings_batched(
         return np.empty((0, 384))
 
     if HAS_SBERT:
+        if "sbert" not in _MODEL_CACHE or _MODEL_CACHE.get("sbert_name") != model_name:
+            logger.info(f"Loading SentenceTransformer '{model_name}'...")
+            _MODEL_CACHE["sbert"] = SentenceTransformer(model_name)
+            _MODEL_CACHE["sbert_name"] = model_name
+        model = _MODEL_CACHE["sbert"]
+
         logger.info(
             f"Computing SBERT embeddings using '{model_name}' (batch_size={batch_size})..."
         )
-        model = SentenceTransformer(model_name)
         embeddings = model.encode(texts, batch_size=batch_size, show_progress_bar=False)
         return np.array(embeddings)
     else:
@@ -377,15 +386,23 @@ def extract_roberta_sentiment_batched(
         return []
 
     if HAS_TRANSFORMERS:
+        if (
+            "roberta" not in _MODEL_CACHE
+            or _MODEL_CACHE.get("roberta_name") != model_name
+        ):
+            logger.info(f"Loading RoBERTa sentiment pipeline '{model_name}'...")
+            _MODEL_CACHE["roberta"] = pipeline(
+                "sentiment-analysis",
+                model=model_name,
+                tokenizer=model_name,
+                top_k=None,
+                device=-1,  # Force CPU for general environment compatibility
+            )
+            _MODEL_CACHE["roberta_name"] = model_name
+        classifier = _MODEL_CACHE["roberta"]
+
         logger.info(
             f"Computing RoBERTa sentiment using '{model_name}' (batch_size={batch_size})..."
-        )
-        classifier = pipeline(
-            "sentiment-analysis",
-            model=model_name,
-            tokenizer=model_name,
-            top_k=None,
-            device=-1,  # Force CPU for general environment compatibility
         )
         scores = []
         # Process batched inputs via pipeline generator/list
@@ -404,7 +421,11 @@ def extract_roberta_sentiment_batched(
 
 
 def train_or_load_topic_model(
-    texts: List[str], embeddings: np.ndarray, model_dir: str, min_topic_size: int
+    texts: List[str],
+    embeddings: np.ndarray,
+    model_dir: str,
+    min_topic_size: int,
+    force_refit: bool = False,
 ) -> Tuple[Union[BERTopic, FallbackKMeansTopicModel], List[int]]:
     """Fits topic model (BERTopic or KMeans fallback) and saves it to disk if not cached.
 
@@ -413,6 +434,7 @@ def train_or_load_topic_model(
         embeddings: Pre-computed document SBERT embeddings.
         model_dir: Local path to save/load the topic model.
         min_topic_size: Minimum topic cluster size configuration.
+        force_refit: Whether to force refitting the model even if cached on disk.
 
     Returns:
         Tuple of (fitted model, document topic assignments).
@@ -421,9 +443,10 @@ def train_or_load_topic_model(
     model_file = os.path.join(model_dir, "topic_model.pkl")
 
     if HAS_BERTOPIC:
-        # Load from disk if it exists
-        if os.path.exists(model_file) or os.path.exists(
-            os.path.join(model_dir, "topics.json")
+        # Load from disk if it exists and force_refit is False
+        if not force_refit and (
+            os.path.exists(model_file)
+            or os.path.exists(os.path.join(model_dir, "topics.json"))
         ):
             logger.info(f"Loading cached BERTopic model from {model_dir}...")
             try:
@@ -448,7 +471,7 @@ def train_or_load_topic_model(
         return model, list(topics)
     else:
         # Fallback custom KMeans clustering model
-        if os.path.exists(model_file):
+        if not force_refit and os.path.exists(model_file):
             logger.info(f"Loading cached FallbackKMeansTopicModel from {model_file}...")
             with open(model_file, "rb") as f:
                 model = pickle.load(f)
@@ -472,11 +495,12 @@ def train_or_load_topic_model(
 # --- Main Feature Extraction pipeline ---
 
 
-def build_text_features(config: AppConfig) -> pd.DataFrame:
+def build_text_features(config: AppConfig, force_refit: bool = False) -> pd.DataFrame:
     """Loads deal timelines, extracts Stream A text features, and saves them to parquet.
 
     Args:
         config: Loaded AppConfig configurations containing path inputs/outputs.
+        force_refit: Whether to force refitting the BERTopic model.
 
     Returns:
         The validated text features DataFrame.
@@ -544,6 +568,7 @@ def build_text_features(config: AppConfig) -> pd.DataFrame:
         embeddings,
         features_config.bertopic_model_dir,
         features_config.bertopic_min_topic_size,
+        force_refit=force_refit,
     )
 
     # Step 5: Load hedge words
@@ -655,3 +680,21 @@ def build_text_features(config: AppConfig) -> pd.DataFrame:
     logger.info(f"Successfully saved {len(df)} deal text feature rows to {output_path}")
 
     return df
+
+
+if __name__ == "__main__":
+    import argparse
+
+    from src.config import load_config
+
+    parser = argparse.ArgumentParser(description="Build text features pipeline CLI")
+    parser.add_argument(
+        "config_dir", nargs="?", default=None, help="Directory containing config files"
+    )
+    parser.add_argument(
+        "--force-refit", action="store_true", help="Force refitting the BERTopic model"
+    )
+    args = parser.parse_args()
+
+    cfg = load_config(config_dir=args.config_dir)
+    build_text_features(cfg, force_refit=args.force_refit)

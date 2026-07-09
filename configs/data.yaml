@@ -10,6 +10,10 @@ deal_linker_seed: 42
 subject_similarity_threshold: 0.5
 time_proximity_window_days: 7
 
+# Content relevance filter: only cluster emails with deal-relevant content from external parties
+deal_relevance_keywords_path: "src/ingestion/resources/deal_relevance_keywords.txt"
+
 # Processed paths
 processed_deals_dir: "data/processed/deals"
 processed_features_path: "data/processed/tabular_features.parquet"
+max_deals_debug: null
