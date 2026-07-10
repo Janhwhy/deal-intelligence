@@ -115,7 +115,29 @@ For faster iterations on a subset of the dataset, you can limit the pipeline to 
 
 ---
 
-## Known Limitation: Deal-Linking
+## Known Limitations
+
+### 1. Synthetic Deal-Linking
 > [!IMPORTANT]
 > **Enron emails and HubSpot Kaggle CRM data are not natively linked by deal_id.**
-> Phase 1 will require a documented synthetic-linking strategy (e.g. clustering email threads by counterparty/subject and attaching synthetic CRM metadata). This is a known dataset limitation that must be explicitly discussed in the project evaluation and limitations section.
+> We use a deterministic pseudo-deal clustering heuristic (grouping emails by partner domain, subject similarity, and time gap), and then sample HubSpot CRM metadata to generate a synthetic deal profile. This limitation must be explicitly noted in system reports.
+
+### 2. Behavioral Outcome Proxy (Label & Feature Leakage)
+> [!WARNING]
+> **The current "won/lost" label is a BEHAVIORAL PROXY, NOT a real sales outcome.**
+> - **"won"** corresponds to active back-and-forth communication (at least one domain-switch and reply from an external party).
+> - **"lost"** corresponds to a ghosted, one-way thread or a single-message email thread.
+>
+> This is a **meaningfully different and narrower claim** than the original goal of predicting validated business sales-loss outcomes and inferring causal sales-loss reasons. It should not be implied or treated as equivalent to genuine sales victory or defeat.
+>
+> **Leakage Sanity Check Results:**
+> To verify what the LSTM model is learning, we trained a trivial baseline classifier (Logistic Regression) using **only two structural features** per deal sequence:
+> 1. Total message count
+> 2. Binary `has_external_reply` flag
+>
+> | Model | Validation AUC |
+> |---|---|
+> | Trivial Baseline Classifier | **0.9583** |
+> | LSTM Sequence Encoder | **0.9676** |
+>
+> Because the trivial baseline achieves a validation AUC of **0.9583**, it **confirms that the LSTM is primarily learning to reconstruct the structural rule used to define the behavioral proxy label** rather than detecting complex semantic or sales-negotiation signals in the SBERT embeddings.
