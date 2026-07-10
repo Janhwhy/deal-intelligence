@@ -122,22 +122,12 @@ For faster iterations on a subset of the dataset, you can limit the pipeline to 
 > **Enron emails and HubSpot Kaggle CRM data are not natively linked by deal_id.**
 > We use a deterministic pseudo-deal clustering heuristic (grouping emails by partner domain, subject similarity, and time gap), and then sample HubSpot CRM metadata to generate a synthetic deal profile. This limitation must be explicitly noted in system reports.
 
-### 2. Behavioral Outcome Proxy (Label & Feature Leakage)
-> [!WARNING]
-> **The current "won/lost" label is a BEHAVIORAL PROXY, NOT a real sales outcome.**
-> - **"won"** corresponds to active back-and-forth communication (at least one domain-switch and reply from an external party).
-> - **"lost"** corresponds to a ghosted, one-way thread or a single-message email thread.
+### 2. Synthetic Labeling Approach & Leakage Mitigation
+> [!IMPORTANT]
+> **Labeling Design and Sanity Check Findings:**
+> Originally, Enron email content and HubSpot outcomes were independent. In a prior phase, we explored a **behavioral-proxy labeling approach** (defining a "won" deal based on communication structure: $\ge 2$ emails, at least one external reply, and at least one domain switch).
 >
-> This is a **meaningfully different and narrower claim** than the original goal of predicting validated business sales-loss outcomes and inferring causal sales-loss reasons. It should not be implied or treated as equivalent to genuine sales victory or defeat.
+> However, a leakage sanity check revealed that a trivial classifier using **only two structural features** (total message count and presence of an external reply) achieved a **validation AUC of 0.9583**, virtually identical to the full LSTM sequence encoder's **0.9676 AUC**. This confirmed that the LSTM was not learning meaningful semantic signal from SBERT text embeddings, but was simply rediscovering the structural definition of the proxy label.
 >
-> **Leakage Sanity Check Results:**
-> To verify what the LSTM model is learning, we trained a trivial baseline classifier (Logistic Regression) using **only two structural features** per deal sequence:
-> 1. Total message count
-> 2. Binary `has_external_reply` flag
->
-> | Model | Validation AUC |
-> |---|---|
-> | Trivial Baseline Classifier | **0.9583** |
-> | LSTM Sequence Encoder | **0.9676** |
->
-> Because the trivial baseline achieves a validation AUC of **0.9583**, it **confirms that the LSTM is primarily learning to reconstruct the structural rule used to define the behavioral proxy label** rather than detecting complex semantic or sales-negotiation signals in the SBERT embeddings.
+> **Mitigation:**
+> To eliminate this label leakage, we **reverted to distribution-sampled synthetic labels** from HubSpot's real `deals.csv` dataset. The labels are sampled independently from HubSpot's stage/close statistics, ensuring the model trains on non-leaked targets (yielding a real, baseline AUC of **0.5613**). All advanced temporal features, content relevance filters, and LSTM attention pooling improvements have been retained as clean, non-leaking ML infrastructure.

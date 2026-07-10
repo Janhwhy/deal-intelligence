@@ -444,15 +444,17 @@ def link_deals(
         deal_idx = rng.choice(len(deals_df))
         sampled_deal = deals_df.iloc[deal_idx]
 
-        # Determine outcome using behavioral engagement label derived from the cluster.
-        # This replaces the previous random HubSpot stage assignment, which had no
-        # causal connection to the email content and produced near-chance AUC.
-        outcome = compute_behavioral_outcome(cluster)
-
-        # Still sample HubSpot deal for all CRM metadata (company, amount, contacts)
-        # but IGNORE the stage/outcome fields from HubSpot — use behavioral label instead.
-        stage = "Closed Won" if outcome == "won" else "Closed Lost"
+        # Extract basic deal attributes
+        stage = str(sampled_deal["stage"])
         amount = float(sampled_deal["amount"])
+
+        # Determine outcome from stage
+        if stage == "Closed Won":
+            outcome = "won"
+        elif stage == "Closed Lost":
+            outcome = "lost"
+        else:
+            outcome = "open"
 
         # Lookup company information
         company_id = sampled_deal["company_id"]

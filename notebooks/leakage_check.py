@@ -19,7 +19,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def extract_structural_features(deals_dir: str, filenames: List[str]) -> Tuple[np.ndarray, np.ndarray]:
+def extract_structural_features(
+    deals_dir: str, filenames: List[str]
+) -> Tuple[np.ndarray, np.ndarray]:
     """Extracts only two trivial scalar features per deal:
     1. total_message_count
     2. has_external_reply (binary: 1.0 if at least one email sender is not @enron.com, else 0.0)
@@ -36,9 +38,9 @@ def extract_structural_features(deals_dir: str, filenames: List[str]) -> Tuple[n
 
         outcome = 1.0 if data.get("outcome") == "won" else 0.0
         emails = [e for e in data.get("events", []) if e.get("type") == "email"]
-        
+
         msg_count = len(emails)
-        
+
         # Check if at least one email is sent by a non-enron address
         has_external_reply = 0.0
         for email in emails:
@@ -48,7 +50,7 @@ def extract_structural_features(deals_dir: str, filenames: List[str]) -> Tuple[n
                 if domain != "enron.com":
                     has_external_reply = 1.0
                     break
-        
+
         X.append([float(msg_count), has_external_reply])
         y.append(outcome)
 
@@ -95,9 +97,11 @@ def run_leakage_check() -> None:
     # Class weighting to handle imbalance, mirroring pos_weight
     train_lost = np.sum(y_train == 0.0)
     train_won = np.sum(y_train == 1.0)
-    
+
     logger.info(f"Train Split: {train_won} Won, {train_lost} Lost")
-    logger.info(f"Validation Split: {np.sum(y_val == 1.0)} Won, {np.sum(y_val == 0.0)} Lost")
+    logger.info(
+        f"Validation Split: {np.sum(y_val == 1.0)} Won, {np.sum(y_val == 0.0)} Lost"
+    )
 
     # Train trivial logistic regression classifier
     # balanced class_weight handles the class imbalance automatically
