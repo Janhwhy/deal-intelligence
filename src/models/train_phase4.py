@@ -13,7 +13,12 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, mean_absolute_error, mean_squared_error, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    mean_absolute_error,
+    mean_squared_error,
+    roc_auc_score,
+)
 
 from src.config import load_config
 from src.fusion import (
@@ -24,7 +29,9 @@ from src.fusion import (
 from src.models.outcome_classifier import OutcomeClassifier
 from src.models.time_to_close import TimeToCloseRegressor
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 

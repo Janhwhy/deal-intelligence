@@ -139,7 +139,9 @@ def align_and_concatenate_features(
 
         err_msg = "Mismatched deal_ids found across feature streams:\n"
         if missing_in_tab:
-            err_msg += f"- Missing in tabular features: {sorted(list(missing_in_tab))}\n"
+            err_msg += (
+                f"- Missing in tabular features: {sorted(list(missing_in_tab))}\n"
+            )
         if missing_in_text:
             err_msg += f"- Missing in text features: {sorted(list(missing_in_text))}\n"
         if missing_in_lstm:
