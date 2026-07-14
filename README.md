@@ -131,3 +131,12 @@ For faster iterations on a subset of the dataset, you can limit the pipeline to 
 >
 > **Mitigation:**
 > To eliminate this label leakage, we **reverted to distribution-sampled synthetic labels** from HubSpot's real `deals.csv` dataset. The labels are sampled independently from HubSpot's stage/close statistics, ensuring the model trains on non-leaked targets (yielding a real, baseline AUC of **0.5613**). All advanced temporal features, content relevance filters, and LSTM attention pooling improvements have been retained as clean, non-leaking ML infrastructure.
+
+### 3. Time-to-Close Regression Trivial Variance & Feature-Target Representation
+> [!IMPORTANT]
+> **Regression Diagnostic Findings & Target Leak Fix:**
+> In Phase 4, the Time-to-Close regression head (XGBoost) achieved a low prediction error (MAE=`0.2583` days, RMSE=`0.6283` days). A diagnostic audit identified:
+> *   **Trivial Target Variance:** The synthetic `days_to_close` target has a standard deviation of only `1.63` days and is heavily peaked (median=`3.0` days).
+> *   **Velocity Feature Target Leak:** The stage velocity features (`velocity_prospecting`, `velocity_demo_scheduled`, etc.) sum up exactly to the target `days_to_close` for closed deals by definition (mean difference = `3.9e-17` days).
+> *   **Exclusion Fix:** To resolve this structural leak, we modified the training pipeline to exclude all `velocity_*` features from the regression head.
+> *   **Post-Exclusion Evaluation:** With velocities excluded, the XGBoost model achieves an MAE of `0.2585` days and RMSE of `0.6283` days, while the naive mean baseline achieves an MAE of `0.3284` days and RMSE of `0.6318` days. This head's low predictive value stems primarily from the near-constant target distribution in the synthetic labels, not from the (now-removed) structural leak, based on the trivial-baseline comparison already performed.

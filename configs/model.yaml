@@ -4,3 +4,8 @@ lstm_hidden_size: 128
 lstm_num_layers: 1
 lstm_seed: 42
 lstm_dropout: 0.0
+
+# Fusion model configurations
+fusion_dropout: 0.1
+fusion_hidden_dim: 256
+train_val_test_ratios: [0.7, 0.15, 0.15]

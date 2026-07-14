@@ -2,3 +2,23 @@
 
 batch_size: 32
 learning_rate: 0.001
+
+# XGBoost outcome classifier parameters (Layer 4)
+outcome_classifier_params:
+  max_depth: 3
+  learning_rate: 0.1
+  n_estimators: 100
+  subsample: 0.8
+  colsample_bytree: 0.8
+  random_state: 42
+  eval_metric: "logloss"
+
+# XGBoost time-to-close regressor parameters (Layer 4)
+time_to_close_params:
+  max_depth: 3
+  learning_rate: 0.1
+  n_estimators: 100
+  subsample: 0.8
+  colsample_bytree: 0.8
+  random_state: 42
+  eval_metric: "rmse"

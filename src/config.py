@@ -1,8 +1,8 @@
 # src/config.py: Configuration utility using OmegaConf.
 
 import os
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
 from omegaconf import OmegaConf
 
@@ -30,12 +30,19 @@ class ModelConfig:
     lstm_num_layers: int
     lstm_seed: int
     lstm_dropout: float
+    fusion_dropout: float = 0.1
+    fusion_hidden_dim: int = 256
+    train_val_test_ratios: List[float] = field(
+        default_factory=lambda: [0.7, 0.15, 0.15]
+    )
 
 
 @dataclass
 class TrainConfig:
     batch_size: int
     learning_rate: float
+    outcome_classifier_params: Dict[str, Any] = field(default_factory=dict)
+    time_to_close_params: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
