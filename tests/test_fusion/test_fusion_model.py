@@ -1,7 +1,7 @@
 # tests/test_fusion/test_fusion_model.py: Tests for Phase 4 fusion model.
 
 import json
-import os
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -84,7 +84,6 @@ def test_temporal_splits_and_determinism(tmp_path, mock_app_config):
     # Ratios
     train_ratio = 0.6
     val_ratio = 0.2
-    test_ratio = 0.2
 
     n = len(sorted_deal_ids)
     train_end = int(train_ratio * n)

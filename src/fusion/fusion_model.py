@@ -45,12 +45,13 @@ def extract_lstm_features(
     Returns:
         A dictionary mapping deal_id (int) to a 128-dimensional trajectory vector (numpy array).
     """
+    from torch.utils.data import DataLoader
+
     from src.features.sequence_dataset import (
         DealSequenceDataset,
         collate_padded_sequences,
     )
     from src.features.sequence_model import LSTMSequenceEncoder
-    from torch.utils.data import DataLoader
 
     # Set seed for reproducible initialization of the encoder weights
     torch.manual_seed(cfg.model.lstm_seed)

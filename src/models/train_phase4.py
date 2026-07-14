@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 # src/models/train_phase4.py: End-to-end training pipeline for Phase 4.
 
 import json
@@ -9,7 +10,6 @@ from collections import Counter
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
-from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
